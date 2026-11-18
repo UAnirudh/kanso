@@ -12,6 +12,9 @@ styling are per-user, validated, versioned and reversible.
 Under the hood the assistant never writes code: it proposes typed operations against a validated
 interface document, which the server checks, previews, applies and versions.
 
+**Documentation site:** <https://uanirudh.github.io/kanso/> — static project docs only. GitHub
+Pages cannot serve this application (no server runtime, no database); see [Deployment](#deployment).
+
 ## Quick start
 
 ```bash
