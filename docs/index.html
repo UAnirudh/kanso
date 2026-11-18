@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Kanso — project documentation</title>
+    <meta
+      name="description"
+      content="Documentation for Kanso, a Next.js application where every user generates their own interface over shared data."
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ffffff;
+        --fg: #16181d;
+        --muted: #5b6270;
+        --rule: #e4e6ec;
+        --code: #f5f6f9;
+        --accent: #4f46e5;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0c0e12;
+          --fg: #e8eaf0;
+          --muted: #9aa2b1;
+          --rule: #23262e;
+          --code: #14171d;
+          --accent: #a5b4fc;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font: 16px/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      main { max-width: 46rem; margin: 0 auto; padding: 4.5rem 1.5rem 5rem; }
+      .eyebrow {
+        font: 600 0.72rem/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      h1 { font-size: clamp(1.9rem, 5vw, 2.6rem); line-height: 1.15; letter-spacing: -0.02em; margin: 0.75rem 0 0.9rem; }
+      h2 { font-size: 1.05rem; letter-spacing: -0.01em; margin: 2.6rem 0 0.8rem; }
+      p, li { color: var(--fg); }
+      .lead { font-size: 1.06rem; color: var(--muted); margin: 0 0 1.4rem; }
+      .notice {
+        border: 1px solid var(--rule);
+        border-left: 3px solid var(--accent);
+        border-radius: 10px;
+        padding: 0.95rem 1.1rem;
+        margin: 1.8rem 0;
+        background: var(--code);
+      }
+      .notice strong { display: block; margin-bottom: 0.15rem; }
+      .notice p { margin: 0; color: var(--muted); font-size: 0.94rem; }
+      a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+      a:hover { text-decoration-thickness: 2px; }
+      code {
+        font: 0.88em/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+        background: var(--code);
+        border: 1px solid var(--rule);
+        border-radius: 5px;
+        padding: 0.08em 0.35em;
+      }
+      pre {
+        background: var(--code);
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        padding: 0.9rem 1rem;
+        overflow-x: auto;
+        font: 0.86rem/1.65 ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      pre code { background: none; border: 0; padding: 0; }
+      ul, ol { padding-left: 1.15rem; }
+      li { margin: 0.35rem 0; }
+      hr { border: 0; border-top: 1px solid var(--rule); margin: 2.6rem 0; }
+      footer { color: var(--muted); font-size: 0.86rem; margin-top: 3rem; }
+      .grid { display: grid; gap: 0.55rem; grid-template-columns: 1fr; }
+      @media (min-width: 640px) { .grid { grid-template-columns: 1fr 1fr; } }
+      .card {
+        border: 1px solid var(--rule);
+        border-radius: 10px;
+        padding: 0.8rem 0.95rem;
+        font-size: 0.94rem;
+      }
+      .card span { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.15rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="eyebrow">Project documentation</p>
+      <h1>Kanso</h1>
+      <p class="lead">
+        A Next.js application in which every person generates their own interface — layout,
+        components, theme — on top of one shared project workspace. Data and permissions stay
+        shared; presentation is per-user, schema-validated and versioned.
+      </p>
+
+      <div class="notice">
+        <strong>This Pages site hosts the documentation, not the running app.</strong>
+        <p>
+          Kanso needs a Node.js server, API routes and a SQLite database. GitHub Pages is a static
+          file host with no server runtime and no database, so the application cannot be served
+          from here. To use it, run it locally or deploy it to a host with a persistent disk.
+        </p>
+      </div>
+
+      <h2>Run it locally</h2>
+      <pre><code>git clone https://github.com/UAnirudh/kanso.git
+cd kanso
+npm install
+npm run db:migrate
+npm run dev   # http://localhost:3000</code></pre>
+      <p>
+        No external services are required. The interface assistant works without an API key using a
+        clearly labelled deterministic planner; set <code>GROQ_API_KEY</code> (and optionally
+        <code>GROQ_MODEL</code>) to use a Groq model. Node.js 20.9+.
+      </p>
+
+      <h2>How it works</h2>
+      <ol>
+        <li>
+          The interface is a typed JSON document: theme, accent, density, navigation, pages and
+          components with props and a 12-column layout.
+        </li>
+        <li>
+          A catalogue of ten components declares each one's prop schema and defaults, span bounds,
+          allowed data bindings and accessibility contract.
+        </li>
+        <li>
+          Changes arrive as one of fourteen typed operations — from the assistant or the visual
+          editor — and are validated, normalised and packed without overlap before they are saved.
+        </li>
+        <li>
+          Documents are stored per <code>(application, user)</code> with append-only revisions, so
+          undo and restore are themselves reversible, and no one can change another person's
+          interface.
+        </li>
+        <li>
+          The model never emits code. It is called with JSON object mode, its output is checked
+          against Zod schemas with one repair round, and nothing is applied until the user previews
+          and confirms it.
+        </li>
+      </ol>
+
+      <h2>Documentation</h2>
+      <div class="grid">
+        <a class="card" href="https://github.com/UAnirudh/kanso/blob/main/README.md">
+          README <span>Setup, scripts, environment, testing</span>
+        </a>
+        <a class="card" href="https://github.com/UAnirudh/kanso/blob/main/PRD.md">
+          Product requirements <span>Vision, audience, scope, metrics, risks</span>
+        </a>
+        <a class="card" href="https://github.com/UAnirudh/kanso/blob/main/ARCHITECTURE.md">
+          Architecture <span>Modules, data model, security, ADRs</span>
+        </a>
+        <a class="card" href="https://github.com/UAnirudh/kanso/blob/main/IMPLEMENTATION_PLAN.md">
+          Implementation plan <span>What shipped, what is verified, what is next</span>
+        </a>
+      </div>
+
+      <h2>Deployment</h2>
+      <p>
+        Deploy to any host that runs <code>next start</code> and can mount a persistent disk for
+        <code>DATABASE_PATH</code> — Fly.io, Render, Railway or a VM. Serverless platforms such as
+        Vercel and static hosts such as GitHub Pages are not suitable as-is, because the SQLite
+        driver writes to local disk and the app has server-side routes.
+      </p>
+      <p>
+        Set <code>GROQ_API_KEY</code> as a server-side secret only. It is read inside server
+        modules and is never exposed to the browser.
+      </p>
+
+      <h2>Status</h2>
+      <ul>
+        <li>Type-check and production build pass; 32 unit tests and 2 Playwright acceptance tests pass.</li>
+        <li>
+          The Groq integration is implemented and its error path is verified against the live API;
+          a successful model completion is unverified without a funded key.
+        </li>
+        <li>
+          Application generation is template-constrained by design, not arbitrary software
+          generation. Real-time collaboration, SSO and email invitations are not implemented.
+        </li>
+      </ul>
+
+      <hr />
+      <footer>
+        Source: <a href="https://github.com/UAnirudh/kanso">github.com/UAnirudh/kanso</a>. This page
+        is static documentation and is served by GitHub Pages.
+      </footer>
+    </main>
+  </body>
+</html>
