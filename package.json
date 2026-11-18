@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "db:migrate": "node scripts/migrate.mjs",
     "db:reset": "node scripts/reset.mjs",
-    "e2e:server": "node scripts/reset.mjs && next dev -p 3100",
+    "e2e:server": "node scripts/reset.mjs && node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true})\" && next dev -p 3100",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test"

@@ -9,13 +9,11 @@ import {
   Columns3,
   History,
   LayoutDashboard,
-  LogOut,
   Plus,
   Sun,
   Users,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import { signOutAction } from "@/app/actions";
 import { Brand } from "@/components/brand";
 import { initials } from "@/lib/format";
 import { ROLE_LABEL, type Role } from "@/lib/roles";
@@ -204,18 +202,11 @@ export function Sidebar({
           </span>
           {!collapsed && (
             <div className="min-w-0 flex-1">
-              <p className="truncate text-[11.5px] font-medium text-[#e8e9ee]">{user.name}</p>
-              <p className="truncate text-[10px] text-[#5f626b]" title={user.email}>
-                {user.email}
+              <p className="truncate text-[11.5px] font-medium text-[#e8e9ee]" data-testid="guest-name">
+                {user.name}
               </p>
+              <p className="truncate text-[10px] text-[#5f626b]">This browser</p>
             </div>
-          )}
-          {!collapsed && (
-            <form action={signOutAction}>
-              <button type="submit" className="btn btn-ghost btn-icon" aria-label="Sign out">
-                <LogOut size={13} aria-hidden />
-              </button>
-            </form>
           )}
         </div>
       </div>

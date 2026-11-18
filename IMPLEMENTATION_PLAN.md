@@ -34,12 +34,12 @@ Status legend: `[x]` implemented and verified · `[~]` implemented, limited veri
 
 ## Phase 4 — Application foundation
 
-- [x] Signup/login/logout with scrypt + httpOnly cookie sessions, server-side revocation.
-- [x] Workspace creation on signup, additional workspace creation, membership roles.
+- [x] Anonymous device identity (httpOnly cookie, server-provisioned guest row); no sign-in.
+- [x] One shared workspace joined automatically on first visit, plus private workspace creation.
 - [x] Database migrations, migration runner, reset script.
 - [x] Application generation from two constrained templates with seeded tasks and notes.
 - [x] Task/note CRUD API with role enforcement and validation.
-- [x] Member management API (add existing account, change role, remove).
+- [x] Member management API (change role, remove); guests join the shared workspace automatically.
 
 ## Phase 5 — Interface rendering engine
 

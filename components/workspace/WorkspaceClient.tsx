@@ -444,25 +444,6 @@ export function WorkspaceClient(props: WorkspaceProps) {
     [appId, pushToast, router],
   );
 
-  const addMember = useCallback(
-    async (email: string, role: Role): Promise<string | null> => {
-      setBusy(true);
-      try {
-        await request(`/api/apps/${appId}/members`, {
-          method: "POST",
-          body: JSON.stringify({ email, role }),
-        });
-        router.refresh();
-        return null;
-      } catch (error) {
-        return error instanceof Error ? error.message : "Could not add that person.";
-      } finally {
-        setBusy(false);
-      }
-    },
-    [appId, router],
-  );
-
   const changeRole = useCallback(
     async (userId: string, role: Role): Promise<string | null> => {
       setBusy(true);
@@ -807,7 +788,6 @@ export function WorkspaceClient(props: WorkspaceProps) {
         canManage={props.canManage}
         busy={busy}
         onClose={() => setMembersOpen(false)}
-        onAdd={addMember}
         onChangeRole={changeRole}
         onRemove={removeMember}
       />

@@ -1,88 +1,120 @@
 import crypto from "node:crypto";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { getDb, newId, nowIso } from "./db";
+import { getDb, newId, nowIso, transaction } from "./db";
 import { HttpError, unauthorized } from "./errors";
+import { createWorkspace } from "./repo/workspaces";
 
-const SESSION_COOKIE = "kanso_session";
-const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+/**
+ * Kanso has no sign-in for now.
+ *
+ * Each browser is handed one opaque device id in an httpOnly cookie, and that id
+ * is the identity behind every workspace row (apps, records, memberships and the
+ * personal interface document). It is a stable workspace identity, deliberately
+ * not a security boundary: anyone with the URL can open the app, and clearing the
+ * cookie starts a fresh, empty identity.
+ *
+ * The cookie is minted by `GET /api/device`, the only place allowed to write it,
+ * because Server Components cannot set cookies during render.
+ */
+export const DEVICE_COOKIE = "kanso_device";
+export const DEVICE_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+
+const DEVICE_PATTERN = /^[a-f0-9]{32}$/;
 
 export interface AuthUser {
   id: string;
-  email: string;
   name: string;
+  email: string;
 }
 
-export function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString("hex");
-  const derived = crypto.scryptSync(password, salt, 64).toString("hex");
-  return `scrypt:${salt}:${derived}`;
+export function newDeviceId(): string {
+  return crypto.randomBytes(16).toString("hex");
 }
 
-export function verifyPassword(password: string, stored: string): boolean {
-  const [scheme, salt, digest] = stored.split(":");
-  if (scheme !== "scrypt" || !salt || !digest) return false;
-  const candidate = crypto.scryptSync(password, salt, 64);
-  const expected = Buffer.from(digest, "hex");
-  if (candidate.length !== expected.length) return false;
-  return crypto.timingSafeEqual(candidate, expected);
+export function isDeviceId(value: string | null | undefined): value is string {
+  return Boolean(value && DEVICE_PATTERN.test(value));
 }
 
-export async function startSession(userId: string): Promise<void> {
-  const db = getDb();
-  const id = newId("sess");
-  const expiresAt = new Date(Date.now() + SESSION_TTL_MS).toISOString();
-  db.prepare(
-    "INSERT INTO sessions (id, user_id, expires_at, created_at) VALUES (?, ?, ?, ?)",
-  ).run(id, userId, expiresAt, nowIso());
+/** Human-readable, stable and unique enough to tell two browsers apart. */
+export function guestName(deviceId: string): string {
+  return `Guest ${deviceId.slice(0, 4).toUpperCase()}`;
+}
 
-  const jar = await cookies();
-  jar.set(SESSION_COOKIE, id, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    expires: new Date(expiresAt),
+interface GuestRow {
+  id: string;
+  name: string;
+  email: string;
+}
+
+function findByDevice(deviceId: string): GuestRow | null {
+  const row = getDb()
+    .prepare("SELECT id, name, email FROM users WHERE device_id = ?")
+    .get(deviceId) as GuestRow | undefined;
+  return row ?? null;
+}
+
+function sharedWorkspaceId(): string | null {
+  const row = getDb()
+    .prepare("SELECT id FROM workspaces WHERE is_shared = 1 ORDER BY created_at LIMIT 1")
+    .get() as { id: string } | undefined;
+  return row?.id ?? null;
+}
+
+/**
+ * Idempotent: resolves the guest row for a device, creating it (and joining the
+ * shared workspace) on first sight. Two simultaneous first requests are handled
+ * by the unique index on `users.device_id` plus a re-check inside the write
+ * transaction, so exactly one guest row and one shared workspace are created.
+ */
+export function resolveDeviceUser(deviceId: string): AuthUser {
+  const existing = findByDevice(deviceId);
+  if (existing) return existing;
+
+  return transaction(() => {
+    const raced = findByDevice(deviceId);
+    if (raced) return raced;
+
+    const id = newId("usr");
+    const name = guestName(deviceId);
+    const email = `guest-${deviceId.slice(0, 12)}@device.kanso.local`;
+    const now = nowIso();
+
+    getDb()
+      .prepare(
+        `INSERT INTO users (id, email, name, password_hash, created_at, device_id, is_anonymous)
+         VALUES (?, ?, ?, 'no-sign-in', ?, ?, 1)`,
+      )
+      .run(id, email, name, now, deviceId);
+
+    const shared = sharedWorkspaceId();
+    if (shared) {
+      getDb()
+        .prepare(
+          `INSERT OR IGNORE INTO workspace_members (workspace_id, user_id, role, created_at)
+           VALUES (?, ?, 'member', ?)`,
+        )
+        .run(shared, id, now);
+    } else {
+      // The first browser owns the shared workspace; everyone else joins as member.
+      const workspace = createWorkspace(id, "Kanso workspace");
+      getDb().prepare("UPDATE workspaces SET is_shared = 1 WHERE id = ?").run(workspace.id);
+    }
+
+    return { id, name, email };
   });
-}
-
-export async function endSession(): Promise<void> {
-  const jar = await cookies();
-  const sessionId = jar.get(SESSION_COOKIE)?.value;
-  if (sessionId) {
-    getDb().prepare("DELETE FROM sessions WHERE id = ?").run(sessionId);
-  }
-  jar.delete(SESSION_COOKIE);
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
   const jar = await cookies();
-  const sessionId = jar.get(SESSION_COOKIE)?.value;
-  if (!sessionId) return null;
-
-  const db = getDb();
-  const row = db
-    .prepare(
-      `SELECT u.id AS id, u.email AS email, u.name AS name, s.expires_at AS expires_at
-         FROM sessions s
-         JOIN users u ON u.id = s.user_id
-        WHERE s.id = ?`,
-    )
-    .get(sessionId) as
-    | { id: string; email: string; name: string; expires_at: string }
-    | undefined;
-
-  if (!row) return null;
-  if (new Date(row.expires_at).getTime() < Date.now()) {
-    db.prepare("DELETE FROM sessions WHERE id = ?").run(sessionId);
-    return null;
-  }
-  return { id: row.id, email: row.email, name: row.name };
+  const deviceId = jar.get(DEVICE_COOKIE)?.value;
+  return isDeviceId(deviceId) ? resolveDeviceUser(deviceId) : null;
 }
 
+/** Page-level guard: sends a cookieless browser through identity minting. */
 export async function requireUser(): Promise<AuthUser> {
   const user = await getCurrentUser();
-  if (!user) redirect("/login");
+  if (!user) redirect("/api/device");
   return user;
 }
 

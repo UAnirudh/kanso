@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, LayoutGrid, LogOut, Sparkles } from "lucide-react";
-import { signOutAction } from "@/app/actions";
+import { ArrowUpRight, LayoutGrid, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
 import { providerInfo } from "@/lib/ai/provider";
@@ -40,13 +39,13 @@ export default async function DashboardPage() {
               >
                 {initials(user.name)}
               </span>
-              <span className="max-w-[140px] truncate text-[12px] text-[#c8cad2]">{user.name}</span>
+              <span
+                data-testid="guest-name"
+                className="max-w-[140px] truncate text-[12px] text-[#c8cad2]"
+              >
+                {user.name}
+              </span>
             </div>
-            <form action={signOutAction}>
-              <button type="submit" className="btn btn-ghost btn-icon" aria-label="Sign out">
-                <LogOut size={15} aria-hidden />
-              </button>
-            </form>
           </div>
         </div>
       </header>
@@ -63,6 +62,10 @@ export default async function DashboardPage() {
             <p className="mt-1.5 max-w-lg text-[13px] leading-relaxed text-[#82858f]">
               Generate an application, then ask the assistant to reorganise it. Every change is
               validated, previewed and versioned — and only applies to your own interface.
+            </p>
+            <p className="mt-2 max-w-lg text-[12px] leading-relaxed text-[#6b6f7a]">
+              No account needed: this browser holds a private guest identity. Workspace data is
+              shared with everyone here; the interface is yours alone.
             </p>
 
             <div className="mt-7 flex items-center justify-between">

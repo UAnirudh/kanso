@@ -10,7 +10,7 @@ services:
     region: oregon
     dockerfilePath: ./Dockerfile
     dockerContext: .
-    healthCheckPath: /login
+    healthCheckPath: /api/health
     autoDeployTrigger: commit
     envVars:
       - key: NODE_ENV

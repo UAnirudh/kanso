@@ -428,7 +428,6 @@ export function MembersDialog({
   canManage,
   busy,
   onClose,
-  onAdd,
   onChangeRole,
   onRemove,
 }: {
@@ -437,28 +436,26 @@ export function MembersDialog({
   canManage: boolean;
   busy: boolean;
   onClose: () => void;
-  onAdd: (email: string, role: Role) => Promise<string | null>;
   onChangeRole: (userId: string, role: Role) => Promise<string | null>;
   onRemove: (userId: string) => Promise<string | null>;
 }) {
-  const [email, setEmail] = useState("");
-  const [role, setRole] = useState<Role>("member");
   const [error, setError] = useState<string | null>(null);
-  const [notice, setNotice] = useState<string | null>(null);
 
   return (
     <Modal
       open={open}
       onClose={onClose}
       title="Workspace members"
-      description="Everyone here shares the data in this workspace. Each person keeps their own interface."
+      description="Every browser that opens Kanso joins this workspace automatically. Data is shared; each browser keeps its own interface."
     >
       <ul className="divide-y divide-[#16191e]">
         {members.map((member) => (
           <li key={member.userId} className="flex items-center justify-between gap-3 py-2.5">
             <div className="min-w-0">
               <p className="truncate text-[12.5px] text-[#e8e9ee]">{member.name}</p>
-              <p className="truncate text-[11px] text-[#6b6f7a]">{member.email}</p>
+              <p className="truncate text-[11px] text-[#6b6f7a]">
+                {member.role === "owner" ? "Created this workspace" : "Joined from another browser"}
+              </p>
             </div>
             {canManage && member.role !== "owner" ? (
               <div className="flex items-center gap-1.5">
@@ -502,70 +499,21 @@ export function MembersDialog({
         ))}
       </ul>
 
-      {canManage && (
-        <form
-          className="mt-4 rounded-[9px] border border-[#1c1f25] bg-[#0d0f13] p-3"
-          onSubmit={async (event) => {
-            event.preventDefault();
-            setError(null);
-            setNotice(null);
-            const message = await onAdd(email.trim(), role);
-            if (message) setError(message);
-            else {
-              setEmail("");
-              setNotice("Added. They now see this application in their dashboard.");
-            }
-          }}
-        >
-          <p className="text-[12px] font-medium text-[#c8cad2]">Add a member</p>
-          <p className="mt-0.5 text-[11px] text-[#6b6f7a]">
-            They need a Kanso account already. Roles control data access, never interface access.
-          </p>
-          <div className="mt-2 flex gap-2">
-            <label className="sr-only" htmlFor="member-email">
-              Email
-            </label>
-            <input
-              id="member-email"
-              type="email"
-              className="field"
-              placeholder="teammate@company.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              required
-            />
-            <select
-              className="field w-[100px] shrink-0"
-              value={role}
-              onChange={(event) => setRole(event.target.value as Role)}
-              aria-label="Role"
-            >
-              <option value="member">Member</option>
-              <option value="viewer">Viewer</option>
-              <option value="admin">Admin</option>
-            </select>
-            <button type="submit" className="btn btn-primary shrink-0" disabled={busy}>
-              Add
-            </button>
-          </div>
-        </form>
-      )}
-
       {error && (
         <p role="alert" className="mt-3 text-[12px] text-red-300">
           {error}
         </p>
       )}
-      {notice && (
-        <p aria-live="polite" className="mt-3 text-[12px] text-emerald-300">
-          {notice}
-        </p>
-      )}
+
       <p className="mt-4 text-[11px] leading-relaxed text-[#5f626b]">
         Roles: <strong className="text-[#82858f]">owner/admin</strong> manage members and settings ·{" "}
         <strong className="text-[#82858f]">member</strong> edits tasks ·{" "}
         <strong className="text-[#82858f]">viewer</strong> reads only. Interface customisation is
-        always private to the person making it.
+        always private to the browser making it.
+      </p>
+      <p className="mt-2 text-[11px] leading-relaxed text-[#5f626b]">
+        There is no sign-in yet, so a guest name identifies a browser rather than a verified
+        person. Clearing this browser&apos;s cookies starts a new guest.
       </p>
     </Modal>
   );

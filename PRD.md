@@ -60,8 +60,8 @@ Three properties together, which the alternatives do not combine:
 4. **Customize directly** — toggle edit mode, reorder/resize/hide/remove components, edit
    component settings, switch theme, accent, density and navigation width.
 5. **Recover** — version history per user with undo and restore.
-6. **Share** — invite an existing account to the workspace with a role; each member gets their
-   own interface over the same data.
+6. **Share** — every browser joins one shared workspace automatically (no sign-in for now); each
+   person gets their own interface over the same data, and the owner can set roles.
 
 ## 6. Competitive positioning
 
@@ -87,9 +87,9 @@ interference.
 
 **In scope**
 
-- Email/password accounts, httpOnly cookie sessions, scrypt hashing.
-- Workspaces with roles `owner | admin | member | viewer`, membership management for existing
-  accounts.
+- Anonymous device identities: one httpOnly cookie per browser, no sign-in for now.
+- One shared workspace that every guest browser joins, plus private workspaces you create, with
+  roles `owner | admin | member | viewer` and owner/admin role management.
 - Application generation from a constrained template set (project workspace, personal tracker),
   including working pages, tasks and notes.
 - Real CRUD on task/note records, persisted in the database, filtered and rendered by ten

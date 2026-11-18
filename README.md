@@ -24,7 +24,7 @@ npm run db:migrate             # creates .data/kanso.db and applies migrations
 npm run dev                    # http://localhost:3000
 ```
 
-Create an account, describe an application, and you land in a working workspace.
+Open the app — there is no sign-in — describe an application, and you land in a working workspace. Each browser receives a private guest identity inside one shared workspace, so you should see the interface immediately.
 
 Requirements: Node.js 20.9+ (developed on Node 24), npm. No external services are required —
 SQLite is local, and the interface assistant works without any API key.
@@ -81,7 +81,7 @@ The Playwright suite needs browsers once: `npx playwright install chromium`.
 ## Project layout
 
 ```
-app/                    routes: auth pages, dashboard, workspace, API handlers, server actions
+app/                    routes: dashboard, workspace, API handlers, server actions
 components/workspace/   shell (sidebar, top bar), assistant panel, history, dialogs
 components/workspace/render/  surface canvas, registry, the ten component views
 lib/interface/          types, catalogue, operations, engine, store, service, templates, controls
@@ -96,8 +96,9 @@ PRD.md · ARCHITECTURE.md · IMPLEMENTATION_PLAN.md
 
 ## Roles
 
-`owner` / `admin` manage members and settings · `member` edits tasks and notes · `viewer` reads
-only. **Interface customization is available to every role** and is always scoped to the person
+Every browser that opens the deployment joins the shared workspace automatically, so there is no
+invite step: the first browser owns it, later ones are members. `owner` / `admin` manage members
+and settings · `member` edits tasks and notes · `viewer` reads only. **Interface customization is available to every role** and is always scoped to the person
 doing it — a viewer can rearrange their view but cannot write data, and cannot affect anyone else.
 
 ## Testing
@@ -109,16 +110,18 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-The acceptance suite (`e2e/acceptance.spec.ts`) covers: registration, application generation,
-task creation and persistence across reload, the natural-language change with preview and apply,
-layout persistence across a new login, a second member with an independent interface, viewer
-role enforcement at the API, version restore, undo, mobile layout and assistant behaviour, plus a
-separate spec for unauthenticated and cross-workspace access.
+The acceptance suite (`e2e/acceptance.spec.ts`) covers: guest identity minting with no sign-in,
+application generation, task creation and persistence across reload, the natural-language change
+with preview and apply, interface persistence across re-navigation, a second browser with its own
+interface over the same shared data, viewer role enforcement at the API, version restore, undo,
+mobile layout and assistant behaviour, plus a separate spec for cookieless requests, the health
+endpoint and role boundaries.
 
 ## Deployment
 
 The repository ships a production image (`Dockerfile`) and a Render Blueprint (`render.yaml`) that
-attaches a persistent disk, so accounts, workspaces and interfaces survive deploys and restarts.
+attaches a persistent disk, so guest identities, workspaces and interfaces survive deploys and
+restarts.
 
 ### Deploy on Render (recommended: one click after connecting the repo)
 
@@ -131,7 +134,8 @@ attaches a persistent disk, so accounts, workspaces and interfaces survive deplo
 4. If Render prompts for `GROQ_API_KEY`, you can paste it now or leave it blank. Both work — with no
    key the assistant runs on the labelled deterministic planner and says so in the UI.
 5. When the service is live, open `https://<service-name>.onrender.com`. The first request creates
-   and migrates the database, then sign up and generate a workspace.
+   and migrates the database, then generate a workspace. There is no sign-up step: the first
+   request assigns this browser a guest identity.
 
 **Add or change the API key later:** service → **Environment** → add or edit `GROQ_API_KEY` →
 **Save**. Render redeploys the service; the disk, and therefore all data, is untouched. Never put
@@ -182,7 +186,7 @@ writable file. Moving to Postgres first is the path (see ADR-1 — queries are c
 ### Verified vs unverified
 
 Verified on this machine: `npm run build`, the migration step, and `next start` with an absolute
-`DATABASE_PATH` and a custom `PORT`, including a real signup → generate → reload flow against that
+`DATABASE_PATH` and a custom `PORT`, including a real guest-identity → generate → reload flow against that
 production server. **Not verified here:** the Docker image build (Docker is not installed on this
 machine) and the Render deployment itself.
 
@@ -196,7 +200,9 @@ machine) and the Render deployment itself.
   software generation.
 - **No continuous learning**: personalization comes from explicit requests and saved versions only.
 - **Undo/restore** are snapshot-based; there is no operation-level redo stack or diff viewer.
-- **Invites require an existing account**; there is no email delivery.
+- **No sign-in yet.** Every browser joins one shared workspace automatically, so anyone with the
+  URL can read and edit the shared data, and clearing cookies starts a new guest identity. The
+  device cookie is an identity, not an authentication boundary.
 - **Access boundary returns a 404 screen with HTTP 200** when the route streams its loading shell
   (no application data is exposed; the API returns 403).
 - CSV export, real-time collaboration, SSO and billing are not implemented.

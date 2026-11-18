@@ -89,41 +89,6 @@ export function listWorkspacesForUser(userId: string): Array<Workspace & { role:
     .all(userId) as Array<Workspace & { role: Role }>;
 }
 
-export function addMemberByEmail(input: {
-  workspaceId: string;
-  email: string;
-  role: Role;
-  invitedBy: Role;
-}): Member {
-  const db = getDb();
-  const user = db
-    .prepare("SELECT id, name, email FROM users WHERE email = ?")
-    .get(input.email.trim().toLowerCase()) as
-    | { id: string; name: string; email: string }
-    | undefined;
-
-  if (!user) {
-    throw new HttpError(
-      404,
-      "No Kanso account uses that email yet. Ask them to sign up first, then add them.",
-    );
-  }
-  if (input.role === "owner" && input.invitedBy !== "owner") {
-    throw new HttpError(403, "Only the workspace owner can transfer ownership.");
-  }
-  const existing = getMembership(input.workspaceId, user.id);
-  if (existing) {
-    throw new HttpError(409, `${user.name} is already a ${ROLE_LABEL[existing].toLowerCase()} here.`);
-  }
-
-  const createdAt = nowIso();
-  db.prepare(
-    "INSERT INTO workspace_members (workspace_id, user_id, role, created_at) VALUES (?, ?, ?, ?)",
-  ).run(input.workspaceId, user.id, input.role, createdAt);
-
-  return { userId: user.id, name: user.name, email: user.email, role: input.role, createdAt };
-}
-
 export function updateMemberRole(workspaceId: string, userId: string, role: Role): void {
   const membership = getMembership(workspaceId, userId);
   if (!membership) throw new HttpError(404, "That person is not a member of this workspace.");

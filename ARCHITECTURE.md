@@ -110,8 +110,8 @@ SQLite, defined in `migrations/0001_init.sql` and applied by `lib/db.ts` (or `np
 
 | Table | Purpose | Key constraints |
 | --- | --- | --- |
-| `users` | Accounts | unique email, scrypt hash |
-| `sessions` | Cookie sessions | FK user, expiry index |
+| `users` | Guest device identities (no sign-in) | unique `device_id`, synthetic email, unusable credential |
+| `sessions` | Legacy cookie sessions (unused by the guest flow) | FK user, expiry index |
 | `workspaces` | Tenancy container | owner FK |
 | `workspace_members` | Membership + role | PK `(workspace_id, user_id)`, role check |
 | `apps` | Applications | FK workspace, `ON DELETE CASCADE` |
@@ -218,9 +218,10 @@ another provider is a new `completeChat` implementation, not a pipeline rewrite.
 
 ## 8. Security summary
 
-- Passwords: scrypt (`N=16384, r=8, p=1` via Node defaults) with per-user salt, timing-safe compare.
-- Sessions: random 128-bit ids, httpOnly + SameSite=Lax + Secure in production, 30-day expiry,
-  server-side revocation.
+- Identity: an opaque 128-bit device id in an httpOnly + SameSite=Lax cookie (Secure in
+  production), 365-day expiry. It is an identity, not an authentication factor.
+- Guest rows are created server-side only (`resolveDeviceUser`); the browser never supplies a
+  user id, and every authorization check still reads a real membership row.
 - Mutating APIs: same-origin check via `Origin`/`Host`; all inputs parsed with Zod; JSON error
   envelopes without internal details; `cache-control: no-store`.
 - SQL: parameterised statements only; no string interpolation of user values.
@@ -275,6 +276,16 @@ return the authoritative document and `router.refresh()` reconciles server compo
 Three chart shapes are needed, each with a hand-written accessible table fallback. A charting
 dependency would add significant bundle weight for less control over accessibility and theming.
 
+**ADR-9 — Anonymous device identity instead of accounts, for now.**
+Sign-in was removed deliberately, to ship a usable shared workspace without an auth provider.
+`GET /api/device` mints a 128-bit id in an httpOnly, SameSite=Lax cookie (Secure in production);
+the first request that uses it creates a guest `users` row and joins — or creates — the single
+workspace marked `workspaces.is_shared`. Every authorization check still runs against a real
+membership row, so roles, 403s and per-person interface documents are unchanged. The trade-off is
+explicit: the cookie is an identity, not authentication — anyone with the URL joins, and clearing
+cookies starts over. Restoring accounts later means adding a credential check in front of
+`resolveDeviceUser`, not rewriting the authorization model.
+
 ## 10. Request flows (concrete)
 
 **Open an app** → `requireUser` → `requireAppAccess` (403/404 boundary) → `loadInterface`
@@ -290,5 +301,7 @@ response document replaces canvas state.
 client previews locally → `POST /api/apps/:id/ai/apply` → stale-base check → revision `ai` →
 status `applied` → refreshed document.
 
-**Share** → `POST /api/apps/:id/members` → admin check → existing account lookup → membership row
-→ the new member's dashboard lists the app; their first open forks the base interface.
+**Share** → every guest browser resolves to a membership row on first visit (the first browser
+owns the shared workspace, later ones are members) → the shared workspace lists the app in their
+dashboard, and their first open forks the base interface. `PATCH /api/apps/:id/members` changes
+roles behind an admin check.

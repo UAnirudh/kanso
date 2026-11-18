@@ -24,7 +24,7 @@ export default defineConfig({
   ],
   webServer: {
     command: "npm run e2e:server",
-    url: `${baseURL}/login`,
+    url: `${baseURL}/api/health`,
     reuseExistingServer: false,
     timeout: 180_000,
     env: {
