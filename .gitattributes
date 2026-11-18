@@ -1,0 +1,5 @@
+# Shell scripts and container files must keep LF endings, including on Windows
+# checkouts, or the image entrypoint fails with "bad interpreter".
+*.sh text eol=lf
+Dockerfile text eol=lf
+docker-entrypoint* text eol=lf
