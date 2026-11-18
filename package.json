@@ -1,0 +1,39 @@
+{
+  "name": "kanso",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kanso — an AI-native platform where every user's interface adapts to them.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "typecheck": "tsc --noEmit",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:reset": "node scripts/reset.mjs",
+    "e2e:server": "node scripts/reset.mjs && next dev -p 3100",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "better-sqlite3": "12.2.0",
+    "clsx": "2.1.1",
+    "lucide-react": "0.468.0",
+    "next": "15.5.29",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "tailwind-merge": "2.6.0",
+    "zod": "3.24.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.51.1",
+    "@tailwindcss/postcss": "4.1.13",
+    "@types/better-sqlite3": "7.6.12",
+    "@types/node": "22.10.2",
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "tailwindcss": "4.1.13",
+    "typescript": "5.7.2",
+    "vitest": "3.2.4"
+  }
+}
