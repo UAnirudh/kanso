@@ -165,10 +165,16 @@ npm run dev   # http://localhost:3000</code></pre>
 
       <h2>Deployment</h2>
       <p>
-        Deploy to any host that runs <code>next start</code> and can mount a persistent disk for
-        <code>DATABASE_PATH</code> — Fly.io, Render, Railway or a VM. Serverless platforms such as
-        Vercel and static hosts such as GitHub Pages are not suitable as-is, because the SQLite
-        driver writes to local disk and the app has server-side routes.
+        The repository ships a <code>Dockerfile</code> and a Render Blueprint
+        (<code>render.yaml</code>) with a 1 GB disk mounted at <code>/var/data</code> for
+        <code>DATABASE_PATH</code>. Render's Free plan cannot attach a disk; the cheapest
+        disk-backed configuration is roughly $7.25/month, or about $3.84/month elsewhere.
+      </p>
+      <p>
+        Deploy to any host that runs <code>next start</code> and can mount a persistent disk —
+        Fly.io, Render, Railway or a VM. Serverless platforms such as Vercel and static hosts such
+        as GitHub Pages are not suitable as-is, because the SQLite driver writes to local disk and
+        the app has server-side routes.
       </p>
       <p>
         Set <code>GROQ_API_KEY</code> as a server-side secret only. It is read inside server

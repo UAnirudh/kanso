@@ -1,0 +1,30 @@
+# Render Blueprint for Kanso.
+# Blueprint: Render Dashboard -> New -> Blueprint -> select this repository.
+# Render builds ./Dockerfile, mounts a 1 GB disk at /var/data, and prompts for
+# GROQ_API_KEY (leave it blank and add it later in the service's Environment tab).
+services:
+  - type: web
+    name: kanso
+    runtime: docker
+    plan: 0.5c-512mb
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /login
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /var/data/kanso.db
+      # Prompted at blueprint creation, stored only in Render, never in git.
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: qwen/qwen3-32b
+      - key: AI_RATE_LIMIT_PER_MINUTE
+        value: "8"
+    disk:
+      name: kanso-data
+      mountPath: /var/data
+      sizeGB: 1

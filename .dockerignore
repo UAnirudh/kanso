@@ -1,0 +1,27 @@
+# Build context for the production image. Keep local state and tooling out.
+node_modules
+.next
+.git
+.gitignore
+.data
+screenshots
+test-results
+playwright-report
+coverage
+*.log
+*.tsbuildinfo
+.env
+.env.local
+.env.*.local
+docs
+e2e
+tests
+playwright.config.ts
+vitest.config.ts
+README.md
+PRD.md
+ARCHITECTURE.md
+IMPLEMENTATION_PLAN.md
+Dockerfile
+.dockerignore
+render.yaml

@@ -117,13 +117,74 @@ separate spec for unauthenticated and cross-workspace access.
 
 ## Deployment
 
-Not deployed from this environment. The app is a standard Next.js server app with one requirement:
-**a persistent disk for the SQLite file** (Fly.io, Render, Railway, a VM — anything that runs
-`next start` with a volume). Serverless platforms such as Vercel are not suitable as-is because
-`better-sqlite3` writes to local disk; move to Postgres first (see ADR-1: queries are confined to
+The repository ships a production image (`Dockerfile`) and a Render Blueprint (`render.yaml`) that
+attaches a persistent disk, so accounts, workspaces and interfaces survive deploys and restarts.
+
+### Deploy on Render (recommended: one click after connecting the repo)
+
+1. Open the Render Dashboard → **New → Blueprint** and select the GitHub repository
+   `UAnirudh/kanso`. Render reads `render.yaml` from the default branch.
+2. Confirm the service it proposes: Docker build, `plan: 0.5c-512mb`, a 1 GB disk mounted at
+   `/var/data`, `DATABASE_PATH=/var/data/kanso.db`, and `GROQ_API_KEY` as a prompted secret.
+3. Click **Apply** / **Deploy Blueprint**. The first build takes several minutes: the image compiles
+   `better-sqlite3` and runs `next build`.
+4. If Render prompts for `GROQ_API_KEY`, you can paste it now or leave it blank. Both work — with no
+   key the assistant runs on the labelled deterministic planner and says so in the UI.
+5. When the service is live, open `https://<service-name>.onrender.com`. The first request creates
+   and migrates the database, then sign up and generate a workspace.
+
+**Add or change the API key later:** service → **Environment** → add or edit `GROQ_API_KEY` →
+**Save**. Render redeploys the service; the disk, and therefore all data, is untouched. Never put
+the key in a `NEXT_PUBLIC_` variable and never commit it.
+
+### Run the same image anywhere
+
+```bash
+docker build -t kanso .
+docker run -d --name kanso -p 3000:3000 \
+  -v kanso-data:/var/data \
+  -e GROQ_API_KEY=... \
+  kanso
+```
+
+The container applies migrations on start, serves on `$PORT` (default 3000) as a non-root user,
+and keeps the database at `/var/data/kanso.db`. Mount `/var/data` or the data is lost when the
+container is replaced. Without `GROQ_API_KEY` it runs the deterministic planner.
+
+### What it costs, keeping data
+
+| Host | Cheapest configuration that preserves data | Monthly |
+| --- | --- | --- |
+| Render | `0.5c-512mb` web service ($7) + 1 GB disk ($0.25/GB) | ~$7.25 |
+| Railway | Hobby, $5 minimum usage; includes 5 GB volume | ~$5 |
+| Fly.io | `shared-cpu-1x` 512 MB ($3.69) + 1 GB volume ($0.15) | ~$3.84 |
+
+Free tiers do not keep data: Render's Free plan cannot attach a disk at all (ephemeral filesystem,
+files lost on every deploy or restart), and Railway's free allowance caps volumes at 0.5 GB. Fly
+states that invoices under $5 are waived, so the Fly configuration may cost nothing in practice —
+treat that as a published policy to confirm, not a guarantee. Prices are the hosts' published
+rates as of November 2026, excluding tax.
+
+Only the Render blueprint is wired up here. On Railway or Fly you supply the same three things:
+the image, a volume mounted at `/var/data`, and `DATABASE_PATH=/var/data/kanso.db`.
+
+### Data notes
+
+- The disk survives deploys, restarts and rebuilds. It is **not a backup**: there are no automatic
+  snapshots. Copy the file off periodically, or move to Postgres for managed backups.
+- Run **one instance**. SQLite allows a single writer; a disk also pins the service to one instance.
+- Deploys restart the service briefly; there is no zero-downtime swap with a disk attached.
+
+Serverless platforms such as Vercel are still not suitable as-is: `better-sqlite3` needs a local
+writable file. Moving to Postgres first is the path (see ADR-1 — queries are confined to
 `lib/repo/*`, documents become `jsonb`, placeholders change from `?` to `$1`).
 
-Set `GROQ_API_KEY` as a server-side secret. Never expose it with a `NEXT_PUBLIC_` prefix.
+### Verified vs unverified
+
+Verified on this machine: `npm run build`, the migration step, and `next start` with an absolute
+`DATABASE_PATH` and a custom `PORT`, including a real signup → generate → reload flow against that
+production server. **Not verified here:** the Docker image build (Docker is not installed on this
+machine) and the Render deployment itself.
 
 ## Known limitations
 
