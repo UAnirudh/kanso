@@ -5,7 +5,6 @@ import type { Role } from "@/lib/roles";
 export interface WorkspaceUser {
   id: string;
   name: string;
-  email: string;
 }
 
 export interface WorkspaceAppInfo {
@@ -45,7 +44,6 @@ export interface RevisionView {
 export interface MemberView {
   userId: string;
   name: string;
-  email: string;
   role: Role;
   createdAt: string;
 }

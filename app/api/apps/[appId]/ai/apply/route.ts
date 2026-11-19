@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { readJson, withApi, json } from "@/lib/api";
-import { assertSameOrigin, requireApiUser } from "@/lib/auth";
+import { readJson, withApi, json, assertSameOrigin } from "@/lib/api";
+import { requireApiGuest } from "@/lib/identity";
 import { applyProposal, discardProposal } from "@/lib/ai/pipeline";
 import { requireAppAccess } from "@/lib/repo/apps";
 
@@ -15,17 +15,17 @@ export async function POST(
 ) {
   return withApi(async () => {
     assertSameOrigin(request);
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     const body = await readJson(request, bodySchema);
 
     if (body.action === "discard") {
-      discardProposal({ access, userId: user.id, requestId: body.requestId });
+      discardProposal({ access, userId: guest.id, requestId: body.requestId });
       return json({ ok: true });
     }
 
-    const saved = applyProposal({ access, userId: user.id, requestId: body.requestId });
+    const saved = applyProposal({ access, userId: guest.id, requestId: body.requestId });
     return json({ document: saved.document, revisionId: saved.revisionId });
   });
 }

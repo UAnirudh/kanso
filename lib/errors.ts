@@ -14,7 +14,7 @@ export function badRequest(message: string, details: string[] = []): HttpError {
   return new HttpError(400, message, details);
 }
 
-export function unauthorized(message = "Sign in to continue."): HttpError {
+export function unauthorized(message = "This browser has no Kanso identity yet."): HttpError {
   return new HttpError(401, message);
 }
 

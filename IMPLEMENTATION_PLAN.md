@@ -17,8 +17,9 @@ Status legend: `[x]` implemented and verified · `[~]` implemented, limited veri
 - [x] Interface document schema with schema version, theme/accent/density/nav/page/component
       structure.
 - [x] Operation vocabulary (14) with Zod discriminated union and hard limits.
-- [x] Relational model for users, sessions, workspaces, memberships, apps, pages, records,
-      interface definitions, per-user interfaces, revisions, AI requests, rate limits.
+- [x] Relational model for guest identities, the system-owned shared workspace, private
+      workspaces, memberships, apps, pages, records, interface definitions, per-user interfaces,
+      revisions, AI requests, rate limits.
 - [x] Authorization matrix and module boundaries.
 
 ## Phase 3 — Design system

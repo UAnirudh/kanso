@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { readJson, withApi, json } from "@/lib/api";
-import { assertSameOrigin, requireApiUser } from "@/lib/auth";
+import { readJson, withApi, json, assertSameOrigin } from "@/lib/api";
+import { requireApiGuest } from "@/lib/identity";
 import { forbidden } from "@/lib/errors";
 import { requireAppAccess } from "@/lib/repo/apps";
 import { listMembers, removeMember, updateMemberRole } from "@/lib/repo/workspaces";
@@ -19,9 +19,9 @@ export async function GET(
   { params }: { params: Promise<{ appId: string }> },
 ) {
   return withApi(async () => {
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     return json({ members: listMembers(access.workspace.id) });
   });
 }
@@ -32,9 +32,9 @@ export async function PATCH(
 ) {
   return withApi(async () => {
     assertSameOrigin(request);
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     if (!access.canManage) throw forbidden("Only workspace admins can change roles.");
 
     const body = await readJson(request, patchSchema);
@@ -49,9 +49,9 @@ export async function DELETE(
 ) {
   return withApi(async () => {
     assertSameOrigin(request);
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     if (!access.canManage) throw forbidden("Only workspace admins can remove members.");
 
     const body = await readJson(request, deleteSchema);

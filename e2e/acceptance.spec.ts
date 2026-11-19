@@ -122,7 +122,8 @@ test("per-browser adaptive interface over one shared workspace", async ({ browse
   await expect(pageA.locator('[data-node-type="ProgressChart"]')).toBeVisible();
   await expect(pageA.locator('[data-node-type="Calendar"]')).toHaveCount(0);
 
-  // 12. Role boundaries: the workspace owner demotes B to viewer.
+  // 12. Role boundaries: an admin demotes B to viewer. No browser owns the shared
+  // workspace, so management rights never depend on one cookie.
   await pageA.getByRole("button", { name: "Members" }).click();
   const memberRow = pageA.locator("li", { hasText: guestB });
   await expect(memberRow).toBeVisible();
@@ -151,6 +152,23 @@ test("per-browser adaptive interface over one shared workspace", async ({ browse
   await pageA.getByRole("button", { name: /versions?$/ }).first().click();
   await pageA.getByRole("button", { name: "Undo last change" }).click();
   await expect(pageA.locator(".surface")).toHaveAttribute("data-theme", "dark");
+
+  // 13c. The workspace outlives this browser. Clearing its cookie starts a new
+  // guest that is still an equal manager, so the stale row can be retired and the
+  // workspace never ends up with nobody able to manage it.
+  await pageA.context().clearCookies();
+  await pageA.goto("/dashboard");
+  const guestC = (await pageA.getByTestId("guest-name").first().innerText()).trim();
+  expect(guestC).toMatch(/^Guest [0-9A-F]{4}$/);
+  expect([guestA, guestB]).not.toContain(guestC);
+
+  await openApp(pageA);
+  await pageA.getByRole("button", { name: "Members" }).click();
+  const staleRow = pageA.locator("li", { hasText: guestA });
+  await expect(staleRow).toBeVisible();
+  await staleRow.getByRole("button", { name: "Remove" }).click();
+  await expect(staleRow).toHaveCount(0);
+  await pageA.getByRole("button", { name: "Close", exact: true }).click();
 
   // 14. Mobile layout: navigation collapses to a sheet and the canvas stacks.
   const mobile = await browser.newContext({
@@ -201,15 +219,41 @@ test("identity, health and role boundaries are enforced server-side", async ({ b
   const missing = await page.request.get("/api/apps/app_does_not_exist/records");
   expect(missing.status()).toBe(404);
 
-  // A plain member cannot change anybody's role.
-  const forbidden = await page.request.patch(`/api/apps/${appId}/members`, {
-    data: { userId: "usr_not_a_member", role: "viewer" },
-  });
-  expect(forbidden.status()).toBe(403);
+  // The shared workspace has no owner row: it belongs to Kanso, not to a browser.
+  const roster = (await (await page.request.get(`/api/apps/${appId}/members`)).json()) as {
+    members: Array<{ userId: string; name: string; role: string }>;
+  };
+  expect(roster.members.length).toBeGreaterThan(0);
+  expect(roster.members.every((member) => member.role !== "owner")).toBe(true);
 
-  // But it can read the shared data it is a member of.
-  const readable = await page.request.get(`/api/apps/${appId}/records`);
+  // Another browser joins with the same rights; this admin demotes it to viewer.
+  const second = await browser.newContext();
+  const secondPage = await second.newPage();
+  const guestB = await openDashboard(secondPage);
+  const joined = (await (await page.request.get(`/api/apps/${appId}/members`)).json()) as {
+    members: Array<{ userId: string; name: string }>;
+  };
+  const target = joined.members.find((member) => member.name === guestB);
+  expect(target).toBeTruthy();
+  const demoted = await page.request.patch(`/api/apps/${appId}/members`, {
+    data: { userId: target!.userId, role: "viewer" },
+  });
+  expect(demoted.status()).toBe(200);
+
+  // A demoted browser reads the shared data but cannot manage members or write.
+  const readable = await secondPage.request.get(`/api/apps/${appId}/records`);
   expect(readable.status()).toBe(200);
 
+  const cannotManage = await secondPage.request.patch(`/api/apps/${appId}/members`, {
+    data: { userId: target!.userId, role: "admin" },
+  });
+  expect(cannotManage.status()).toBe(403);
+
+  const cannotWrite = await secondPage.request.post(`/api/apps/${appId}/records`, {
+    data: { kind: "task", title: "Should be rejected" },
+  });
+  expect(cannotWrite.status()).toBe(403);
+
+  await second.close();
   await context.close();
 });

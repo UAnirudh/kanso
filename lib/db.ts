@@ -42,20 +42,37 @@ function applyMigrations(db: Database.Database): void {
     .filter((file) => file.endsWith(".sql"))
     .sort();
 
-  for (const file of files) {
-    if (applied.has(file)) continue;
-    // The runner owns the transaction; migration files stay declarative.
-    const sql = fs
-      .readFileSync(path.join(dir, file), "utf8")
-      .replace(/^\s*(BEGIN|COMMIT);\s*$/gim, "");
-    const run = db.transaction(() => {
-      db.exec(sql);
-      db.prepare("INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(
-        file,
-        new Date().toISOString(),
-      );
-    });
-    run();
+  // SQLite can only rebuild a table (drop a UNIQUE column, change a constraint)
+  // with foreign-key enforcement off, and that pragma cannot change inside the
+  // transaction that makes each migration atomic. Enforcement is therefore off for
+  // the run, and every migration is checked with `foreign_key_check` before it is
+  // recorded, so a migration that breaks referential integrity fails instead of
+  // being marked applied.
+  db.pragma("foreign_keys = OFF");
+  try {
+    for (const file of files) {
+      if (applied.has(file)) continue;
+      // The runner owns the transaction; migration files stay declarative.
+      const sql = fs
+        .readFileSync(path.join(dir, file), "utf8")
+        .replace(/^\s*(BEGIN|COMMIT);\s*$/gim, "");
+      const run = db.transaction(() => {
+        db.exec(sql);
+        const violations = db.prepare("PRAGMA foreign_key_check").all();
+        if (violations.length > 0) {
+          throw new Error(
+            `Migration ${file} left ${violations.length} foreign key violation(s).`,
+          );
+        }
+        db.prepare("INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(
+          file,
+          new Date().toISOString(),
+        );
+      });
+      run();
+    }
+  } finally {
+    db.pragma("foreign_keys = ON");
   }
 }
 

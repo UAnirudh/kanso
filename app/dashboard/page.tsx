@@ -3,17 +3,17 @@ import { ArrowUpRight, LayoutGrid, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
 import { providerInfo } from "@/lib/ai/provider";
-import { requireUser } from "@/lib/auth";
+import { requireGuest } from "@/lib/identity";
 import { initials } from "@/lib/format";
 import { listAppsForUser } from "@/lib/repo/apps";
 import { ROLE_LABEL, listWorkspacesForUser } from "@/lib/repo/workspaces";
 
 export default async function DashboardPage() {
-  const user = await requireUser();
-  const workspaces = listWorkspacesForUser(user.id);
-  const apps = listAppsForUser(user.id);
+  const guest = await requireGuest();
+  const workspaces = listWorkspacesForUser(guest.id);
+  const apps = listAppsForUser(guest.id);
   const provider = providerInfo();
-  const firstName = user.name.split(/\s+/)[0] ?? user.name;
+  const firstName = guest.name.split(/\s+/)[0] ?? guest.name;
 
   return (
     <div className="min-h-dvh">
@@ -37,13 +37,13 @@ export default async function DashboardPage() {
                 aria-hidden
                 className="grid h-6 w-6 place-items-center rounded-full bg-[#1b1e24] text-[10px] font-semibold text-[#c8cad2]"
               >
-                {initials(user.name)}
+                {initials(guest.name)}
               </span>
               <span
                 data-testid="guest-name"
                 className="max-w-[140px] truncate text-[12px] text-[#c8cad2]"
               >
-                {user.name}
+                {guest.name}
               </span>
             </div>
           </div>

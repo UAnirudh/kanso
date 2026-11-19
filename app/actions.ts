@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireUser } from "@/lib/auth";
+import { requireGuest } from "@/lib/identity";
 import { HttpError } from "@/lib/errors";
 import { generateApplication } from "@/lib/services/generation";
 import { createWorkspace } from "@/lib/repo/workspaces";
@@ -23,7 +23,7 @@ export async function createApplicationAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  const guest = await requireGuest();
   const parsed = createAppSchema.safeParse({
     prompt: formData.get("prompt"),
     name: formData.get("name") || undefined,
@@ -36,7 +36,7 @@ export async function createApplicationAction(
   let appId: string;
   try {
     const result = generateApplication({
-      userId: user.id,
+      userId: guest.id,
       workspaceId: parsed.data.workspaceId,
       prompt: parsed.data.prompt,
       name: parsed.data.name,
@@ -60,12 +60,12 @@ export async function createWorkspaceAction(
   _prev: FormState,
   formData: FormData,
 ): Promise<FormState> {
-  const user = await requireUser();
+  const guest = await requireGuest();
   const parsed = workspaceSchema.safeParse({ name: formData.get("name") });
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Check the form." };
 
   try {
-    createWorkspace(user.id, parsed.data.name);
+    createWorkspace(guest.id, parsed.data.name);
   } catch (error) {
     console.error("[workspace]", error);
     return { error: "Could not create the workspace." };

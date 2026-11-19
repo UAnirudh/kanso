@@ -33,6 +33,25 @@ export async function withApi(handler: () => Promise<Response>): Promise<Respons
   }
 }
 
+/**
+ * Rejects state-changing requests that a browser on another site triggered.
+ * Origin-less requests (server-side tools, same-origin form posts) are allowed.
+ */
+export function assertSameOrigin(request: Request): void {
+  const origin = request.headers.get("origin");
+  if (!origin) return;
+  const host = request.headers.get("host");
+  let originHost: string;
+  try {
+    originHost = new URL(origin).host;
+  } catch {
+    throw new HttpError(403, "Invalid origin.");
+  }
+  if (host && originHost !== host) {
+    throw new HttpError(403, "Cross-origin request blocked.");
+  }
+}
+
 export async function readJson<T>(request: Request, schema: z.ZodType<T>): Promise<T> {
   let body: unknown;
   try {

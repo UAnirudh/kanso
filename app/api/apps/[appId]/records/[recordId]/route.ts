@@ -1,5 +1,5 @@
-import { withApi, json } from "@/lib/api";
-import { assertSameOrigin, requireApiUser } from "@/lib/auth";
+import { withApi, json, assertSameOrigin } from "@/lib/api";
+import { requireApiGuest } from "@/lib/identity";
 import { badRequest, forbidden } from "@/lib/errors";
 import { requireAppAccess } from "@/lib/repo/apps";
 import { deleteRecord, taskUpdateSchema, updateTask } from "@/lib/repo/records";
@@ -10,9 +10,9 @@ export async function PATCH(
 ) {
   return withApi(async () => {
     assertSameOrigin(request);
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId, recordId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     if (!access.canEdit) throw forbidden("Your role is view-only.");
 
     const body = await request.json().catch(() => null);
@@ -29,9 +29,9 @@ export async function DELETE(
 ) {
   return withApi(async () => {
     assertSameOrigin(request);
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId, recordId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     if (!access.canEdit) throw forbidden("Your role is view-only.");
     deleteRecord(access.app.id, recordId);
     return json({ ok: true });

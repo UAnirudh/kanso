@@ -9,19 +9,14 @@
 import { chromium } from "@playwright/test";
 
 const base = process.env.SHOT_BASE_URL || "http://127.0.0.1:3200";
-const email = `provider.${Date.now()}@example.com`;
-const password = "provider-check-pass";
 
 const browser = await chromium.launch();
 const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
 let failed = false;
 
 try {
-  await page.goto(`${base}/signup`);
-  await page.fill("#signup-name", "Provider Check");
-  await page.fill("#signup-email", email);
-  await page.fill("#signup-password", password);
-  await page.getByRole("button", { name: "Create account" }).click();
+  // No sign-in: the first request mints a guest identity for this browser.
+  await page.goto(base);
   await page.waitForURL("**/dashboard");
 
   await page.fill("#app-prompt", "Create a project management application with a kanban board");

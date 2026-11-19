@@ -88,8 +88,9 @@ interference.
 **In scope**
 
 - Anonymous device identities: one httpOnly cookie per browser, no sign-in for now.
-- One shared workspace that every guest browser joins, plus private workspaces you create, with
-  roles `owner | admin | member | viewer` and owner/admin role management.
+- One shared workspace that every guest browser joins as an equal admin — it is owned by a system
+  identity rather than a browser, so a cleared cookie cannot orphan it — plus private workspaces you
+  own, with roles `owner | admin | member | viewer` and admin role management.
 - Application generation from a constrained template set (project workspace, personal tracker),
   including working pages, tasks and notes.
 - Real CRUD on task/note records, persisted in the database, filtered and rendered by ten

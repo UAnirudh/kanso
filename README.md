@@ -86,7 +86,7 @@ components/workspace/   shell (sidebar, top bar), assistant panel, history, dial
 components/workspace/render/  surface canvas, registry, the ten component views
 lib/interface/          types, catalogue, operations, engine, store, service, templates, controls
 lib/ai/                 provider adapter, prompts, local planner, pipeline
-lib/repo/               SQL data access (users, workspaces, apps, records, ai)
+lib/repo/               SQL data access (guests, workspaces, apps, records, ai)
 lib/services/           application generation
 migrations/             SQL schema
 tests/ · e2e/           Vitest unit tests · Playwright acceptance tests
@@ -97,8 +97,10 @@ PRD.md · ARCHITECTURE.md · IMPLEMENTATION_PLAN.md
 ## Roles
 
 Every browser that opens the deployment joins the shared workspace automatically, so there is no
-invite step: the first browser owns it, later ones are members. `owner` / `admin` manage members
-and settings · `member` edits tasks and notes · `viewer` reads only. **Interface customization is available to every role** and is always scoped to the person
+invite step and no owner to appoint. The workspace is owned by Kanso itself, not by a browser, and
+every guest joins as an `admin` — so clearing one browser's cookie can never leave the workspace with
+nobody able to manage it, and a stale guest can still be retired from the roster. `owner` / `admin`
+manage members and settings · `member` edits tasks and notes · `viewer` reads only. **Interface customization is available to every role** and is always scoped to the person
 doing it — a viewer can rearrange their view but cannot write data, and cannot affect anyone else.
 
 ## Testing
@@ -114,8 +116,9 @@ The acceptance suite (`e2e/acceptance.spec.ts`) covers: guest identity minting w
 application generation, task creation and persistence across reload, the natural-language change
 with preview and apply, interface persistence across re-navigation, a second browser with its own
 interface over the same shared data, viewer role enforcement at the API, version restore, undo,
-mobile layout and assistant behaviour, plus a separate spec for cookieless requests, the health
-endpoint and role boundaries.
+mobile layout and assistant behaviour, recovery after the first browser clears its cookie, plus a
+separate spec for cookieless requests, the health endpoint, the absence of an owner row and role
+boundaries.
 
 ## Deployment
 
@@ -203,6 +206,9 @@ machine) and the Render deployment itself.
 - **No sign-in yet.** Every browser joins one shared workspace automatically, so anyone with the
   URL can read and edit the shared data, and clearing cookies starts a new guest identity. The
   device cookie is an identity, not an authentication boundary.
+- **Members are browsers, not people.** Removing a member ends that browser's access, but with no
+  accounts it can rejoin with a fresh cookie. Removal exists to prune stale browsers from the roster,
+  not as a security control.
 - **Access boundary returns a 404 screen with HTTP 200** when the route streams its loading shell
   (no application data is exposed; the API returns 403).
 - CSV export, real-time collaboration, SSO and billing are not implemented.

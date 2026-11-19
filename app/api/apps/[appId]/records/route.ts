@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { withApi, json } from "@/lib/api";
-import { assertSameOrigin, requireApiUser } from "@/lib/auth";
+import { withApi, json, assertSameOrigin } from "@/lib/api";
+import { requireApiGuest } from "@/lib/identity";
 import { badRequest, forbidden } from "@/lib/errors";
 import { requireAppAccess } from "@/lib/repo/apps";
 import {
@@ -18,9 +18,9 @@ export async function GET(
   { params }: { params: Promise<{ appId: string }> },
 ) {
   return withApi(async () => {
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     return json({
       tasks: listRecords(access.app.id, "task"),
       notes: listRecords(access.app.id, "note"),
@@ -34,9 +34,9 @@ export async function POST(
 ) {
   return withApi(async () => {
     assertSameOrigin(request);
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     if (!access.canEdit) {
       throw forbidden("Your role is view-only, so you cannot add records here.");
     }
@@ -49,11 +49,11 @@ export async function POST(
     const kind = kindSchema.parse(body.kind);
     if (kind === "task") {
       const data = taskCreateSchema.parse(body);
-      const record = createTask({ appId: access.app.id, userId: user.id, data });
+      const record = createTask({ appId: access.app.id, userId: guest.id, data });
       return json({ record }, 201);
     }
     const data = noteCreateSchema.parse(body);
-    const record = createNote({ appId: access.app.id, userId: user.id, data });
+    const record = createNote({ appId: access.app.id, userId: guest.id, data });
     return json({ record }, 201);
   });
 }

@@ -11,7 +11,7 @@ export default function NotFound() {
           This application isn&apos;t available
         </h1>
         <p className="mt-2 text-[13px] leading-relaxed text-[#82858f]">
-          It may have been deleted, or your account is not a member of its workspace. Interfaces
+          It may have been deleted, or this browser is not a member of its workspace. Interfaces
           are private, but the underlying application still needs workspace access.
         </p>
         <Link href="/dashboard" className="btn btn-secondary mt-5">

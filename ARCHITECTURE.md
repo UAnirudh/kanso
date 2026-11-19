@@ -106,12 +106,16 @@ so a user never receives a half-applied layout. Operations are capped at 8 per r
 
 ## 3. Data model
 
-SQLite, defined in `migrations/0001_init.sql` and applied by `lib/db.ts` (or `npm run db:migrate`).
+SQLite, defined in `migrations/*.sql` and applied by `lib/db.ts` (or `npm run db:migrate`). Files are
+never edited once shipped: `0002` added guest identities and `0003` removed the sign-in schema it
+superseded (`users.email`, `users.password_hash`, the `sessions` table). Because SQLite cannot drop a
+`UNIQUE` column, `0003` rebuilds `users`; the runner applies migrations with foreign-key enforcement
+off and runs `PRAGMA foreign_key_check` before recording each file, so such a rebuild cannot cascade
+data away or commit a broken reference.
 
 | Table | Purpose | Key constraints |
 | --- | --- | --- |
-| `users` | Guest device identities (no sign-in) | unique `device_id`, synthetic email, unusable credential |
-| `sessions` | Legacy cookie sessions (unused by the guest flow) | FK user, expiry index |
+| `users` | Guest device identities, plus one system row that owns the shared workspace | unique `device_id`, `is_system` flag |
 | `workspaces` | Tenancy container | owner FK |
 | `workspace_members` | Membership + role | PK `(workspace_id, user_id)`, role check |
 | `apps` | Applications | FK workspace, `ON DELETE CASCADE` |
@@ -142,6 +146,13 @@ membership row → role. There is no client-supplied user or role anywhere.
 
 Interface personalization is intentionally available to viewers: it is presentation of data they
 are already permitted to read, and it is stored against their own user id.
+
+The shared workspace has no browser owner. A system row (`usr_shared_owner`, `users.is_system = 1`)
+holds `owner_id`, every guest joins as `admin`, and the system row is filtered out of the roster and
+cannot be demoted or removed. This is what keeps the workspace manageable: a guest row is disposable
+(the cookie can be cleared, the row stays behind as a stale browser), so management rights attached to
+one browser would strand the workspace. `owner` therefore only appears for private workspaces, which
+belong to the guest that created them.
 
 ## 5. AI pipeline
 
@@ -220,8 +231,9 @@ another provider is a new `completeChat` implementation, not a pipeline rewrite.
 
 - Identity: an opaque 128-bit device id in an httpOnly + SameSite=Lax cookie (Secure in
   production), 365-day expiry. It is an identity, not an authentication factor.
-- Guest rows are created server-side only (`resolveDeviceUser`); the browser never supplies a
-  user id, and every authorization check still reads a real membership row.
+- Guest rows and their shared-workspace membership are created server-side only (`resolveGuest`);
+  the browser never supplies a user id, and every authorization check still reads a real membership
+  row.
 - Mutating APIs: same-origin check via `Origin`/`Host`; all inputs parsed with Zod; JSON error
   envelopes without internal details; `cache-control: no-store`.
 - SQL: parameterised statements only; no string interpolation of user values.
@@ -284,11 +296,21 @@ workspace marked `workspaces.is_shared`. Every authorization check still runs ag
 membership row, so roles, 403s and per-person interface documents are unchanged. The trade-off is
 explicit: the cookie is an identity, not authentication — anyone with the URL joins, and clearing
 cookies starts over. Restoring accounts later means adding a credential check in front of
-`resolveDeviceUser`, not rewriting the authorization model.
+`resolveGuest`, not rewriting the authorization model.
+
+**ADR-10 — The shared workspace owns itself.**
+ADR-9 left the workspace owned by whichever browser arrived first, which was a latent dead end: that
+cookie is disposable, so once it was cleared the owner row belonged to a browser that would never
+return, and every later guest joined as `member` — nobody could change a role or retire the stale row
+again. Ownership is now attached to a non-browser system identity (`users.is_system = 1`) and guests
+join as equal admins. Roles still gate behaviour exactly as before (a demoted `viewer` gets 403 on
+writes and on member changes), and private workspaces still have a real owner. The rejected
+alternatives were inferring ownership from request order or from a "last seen" timestamp, both of
+which guess at something the cookie cannot prove.
 
 ## 10. Request flows (concrete)
 
-**Open an app** → `requireUser` → `requireAppAccess` (403/404 boundary) → `loadInterface`
+**Open an app** → `requireGuest` → `requireAppAccess` (403/404 boundary) → `loadInterface`
 (fork from base definition on first visit, record `init` revision) → load tasks/notes/activity/
 history/members → render.
 
@@ -301,7 +323,7 @@ response document replaces canvas state.
 client previews locally → `POST /api/apps/:id/ai/apply` → stale-base check → revision `ai` →
 status `applied` → refreshed document.
 
-**Share** → every guest browser resolves to a membership row on first visit (the first browser
-owns the shared workspace, later ones are members) → the shared workspace lists the app in their
-dashboard, and their first open forks the base interface. `PATCH /api/apps/:id/members` changes
-roles behind an admin check.
+**Share** → every guest browser resolves to a membership row on first visit (the workspace is owned by
+a system identity, so each guest joins as an admin and no browser can orphan it) → the shared
+workspace lists the app in their dashboard, and their first open forks the base interface.
+`PATCH /api/apps/:id/members` changes roles behind an admin check.

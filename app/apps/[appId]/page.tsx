@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { WorkspaceClient } from "@/components/workspace/WorkspaceClient";
 import { providerInfo } from "@/lib/ai/provider";
-import { requireUser } from "@/lib/auth";
+import { requireGuest } from "@/lib/identity";
 import { HttpError } from "@/lib/errors";
 import { listAiRequests } from "@/lib/repo/ai";
 import { requireAppAccess } from "@/lib/repo/apps";
@@ -16,12 +16,12 @@ export default async function ApplicationPage({
 }: {
   params: Promise<{ appId: string }>;
 }) {
-  const user = await requireUser();
+  const guest = await requireGuest();
   const { appId } = await params;
 
   let access: ReturnType<typeof requireAppAccess>;
   try {
-    access = requireAppAccess(appId, user.id);
+    access = requireAppAccess(appId, guest.id);
   } catch (error) {
     if (error instanceof HttpError && (error.status === 403 || error.status === 404)) {
       notFound();
@@ -29,21 +29,21 @@ export default async function ApplicationPage({
     throw error;
   }
 
-  const { document, pages } = loadInterface(access, user.id);
+  const { document, pages } = loadInterface(access, guest.id);
   const tasks = listRecords(access.app.id, "task");
   const notes = listRecords(access.app.id, "note");
   const activity = listActivity(access.app.id, 12);
-  const history = interfaceHistory(access, user.id).slice(0, 30);
+  const history = interfaceHistory(access, guest.id).slice(0, 30);
   const members = listMembers(access.workspace.id);
   const provider = providerInfo();
 
   // Recorded so the assistant panel can show recent prompts in future revisions
   // of this screen without another round trip.
-  void listAiRequests(access.app.id, user.id, 5);
+  void listAiRequests(access.app.id, guest.id, 5);
 
   return (
     <WorkspaceClient
-      user={{ id: user.id, name: user.name, email: user.email }}
+      user={{ id: guest.id, name: guest.name }}
       app={{
         id: access.app.id,
         name: access.app.name,

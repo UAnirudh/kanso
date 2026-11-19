@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { readJson, withApi, json } from "@/lib/api";
-import { assertSameOrigin, requireApiUser } from "@/lib/auth";
+import { readJson, withApi, json, assertSameOrigin } from "@/lib/api";
+import { requireApiGuest } from "@/lib/identity";
 import {
   interfaceHistory,
   restoreInterfaceVersion,
@@ -18,10 +18,10 @@ export async function GET(
   { params }: { params: Promise<{ appId: string }> },
 ) {
   return withApi(async () => {
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
-    return json({ history: interfaceHistory(access, user.id) });
+    const access = requireAppAccess(appId, guest.id);
+    return json({ history: interfaceHistory(access, guest.id) });
   });
 }
 
@@ -31,17 +31,17 @@ export async function POST(
 ) {
   return withApi(async () => {
     assertSameOrigin(request);
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     const body = await readJson(request, bodySchema);
 
     const saved =
       body.action === "undo"
-        ? undoInterfaceChange({ access, userId: user.id })
+        ? undoInterfaceChange({ access, userId: guest.id })
         : restoreInterfaceVersion({
             access,
-            userId: user.id,
+            userId: guest.id,
             revisionId: body.revisionId ?? "",
           });
 

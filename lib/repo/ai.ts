@@ -162,7 +162,7 @@ export function listAiRequests(appId: string, userId: string, limit = 12) {
 }
 
 /**
- * Sliding-window budget so one account cannot exhaust the shared model quota.
+ * Sliding-window budget so one browser cannot exhaust the shared model quota.
  * Backed by SQLite; a production deployment would use Redis for the same call.
  */
 export function consumeAiBudget(userId: string, limitPerMinute: number): boolean {

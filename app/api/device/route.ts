@@ -1,10 +1,11 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import {
   DEVICE_COOKIE,
   DEVICE_COOKIE_MAX_AGE,
   isDeviceId,
   newDeviceId,
-} from "@/lib/auth";
+} from "@/lib/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -13,15 +14,11 @@ export const dynamic = "force-dynamic";
  * cookies while rendering, so `/` and every guarded page redirect a cookieless
  * browser here, and the response carries the identity forward.
  */
-export function GET(request: Request) {
-  const header = request.headers.get("cookie") ?? "";
-  const current = header
-    .split(";")
-    .map((part) => part.trim())
-    .find((part) => part.startsWith(`${DEVICE_COOKIE}=`))
-    ?.slice(DEVICE_COOKIE.length + 1);
-
+export async function GET() {
+  const jar = await cookies();
+  const current = jar.get(DEVICE_COOKIE)?.value;
   const deviceId = isDeviceId(current) ? current : newDeviceId();
+
   // A relative Location keeps the origin the browser actually used. Building an
   // absolute URL from request.url can normalise `127.0.0.1` to `localhost`
   // (dev server) or to an internal host behind a proxy, which would mint the

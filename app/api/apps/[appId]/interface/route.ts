@@ -1,6 +1,6 @@
 import { z } from "zod";
-import { readJson, withApi, json } from "@/lib/api";
-import { assertSameOrigin, requireApiUser } from "@/lib/auth";
+import { readJson, withApi, json, assertSameOrigin } from "@/lib/api";
+import { requireApiGuest } from "@/lib/identity";
 import { operationSchema } from "@/lib/interface/operations";
 import { applyInterfaceOperations } from "@/lib/interface/service";
 import { requireAppAccess } from "@/lib/repo/apps";
@@ -16,14 +16,14 @@ export async function PATCH(
 ) {
   return withApi(async () => {
     assertSameOrigin(request);
-    const user = await requireApiUser();
+    const guest = await requireApiGuest();
     const { appId } = await params;
-    const access = requireAppAccess(appId, user.id);
+    const access = requireAppAccess(appId, guest.id);
     const body = await readJson(request, bodySchema);
 
     const saved = applyInterfaceOperations({
       access,
-      userId: user.id,
+      userId: guest.id,
       operations: body.operations,
       label: body.label ?? "Visual edit",
       kind: "manual",

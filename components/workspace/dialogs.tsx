@@ -513,7 +513,8 @@ export function MembersDialog({
       </p>
       <p className="mt-2 text-[11px] leading-relaxed text-[#5f626b]">
         There is no sign-in yet, so a guest name identifies a browser rather than a verified
-        person. Clearing this browser&apos;s cookies starts a new guest.
+        person, and clearing this browser&apos;s cookies starts a new guest. No browser owns the
+        shared workspace, so a new guest can still manage it and remove the stale row.
       </p>
     </Modal>
   );

@@ -31,21 +31,33 @@ const files = fs
   .filter((name) => name.endsWith(".sql"))
   .sort();
 
+// Table rebuilds need foreign-key enforcement off (the pragma is a no-op inside a
+// transaction), so it stays off for the run and every file is checked before it is
+// recorded. Mirrors applyMigrations() in lib/db.ts.
+db.pragma("foreign_keys = OFF");
 let count = 0;
-for (const name of files) {
-  if (applied.has(name)) continue;
-  const sql = fs
-    .readFileSync(path.join(dir, name), "utf8")
-    .replace(/^\s*(BEGIN|COMMIT);\s*$/gim, "");
-  db.transaction(() => {
-    db.exec(sql);
-    db.prepare("INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(
-      name,
-      new Date().toISOString(),
-    );
-  })();
-  count += 1;
-  console.log(`✓ applied ${name}`);
+try {
+  for (const name of files) {
+    if (applied.has(name)) continue;
+    const sql = fs
+      .readFileSync(path.join(dir, name), "utf8")
+      .replace(/^\s*(BEGIN|COMMIT);\s*$/gim, "");
+    db.transaction(() => {
+      db.exec(sql);
+      const violations = db.prepare("PRAGMA foreign_key_check").all();
+      if (violations.length > 0) {
+        throw new Error(`Migration ${name} left ${violations.length} foreign key violation(s).`);
+      }
+      db.prepare("INSERT INTO schema_migrations (name, applied_at) VALUES (?, ?)").run(
+        name,
+        new Date().toISOString(),
+      );
+    })();
+    count += 1;
+    console.log(`✓ applied ${name}`);
+  }
+} finally {
+  db.pragma("foreign_keys = ON");
 }
 
 console.log(`${file}: ${count} migration(s) applied, ${applied.size + count} total.`);
