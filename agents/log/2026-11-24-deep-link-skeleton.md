@@ -53,15 +53,34 @@ reload and the 404 path all behaved correctly on HEAD before the change.
 - The original report cannot be reproduced retrospectively, so the exact trigger that produced it is
   unknown. The most likely candidates are the pre-`41fd3db` sign-in build, or a shell flushed before
   a `notFound()` that had no boundary to land in.
-- The in-app skeleton (`components/workspace/…`) that used to show during navigation is gone; the
-  loss of that transitional UI was accepted rather than replaced with a `Suspense` boundary inside
-  the page. Nobody has looked at it in a real browser profile with slowed network.
+- ~~The in-app skeleton that used to show during navigation is gone.~~ Superseded by the
+  follow-up below: the skeleton was restored as a `Suspense` boundary inside the page.
+- The fallback was confirmed to render in the streamed shell, but not measured under a throttled
+  network profile; on a local SQLite build it is a frame or two, so a slow-network check is the
+  only way to see it at length.
+
+## Follow-up (2026-11-24, same task): skeleton restored as an in-page Suspense
+
+The transitional skeleton was wanted back, so it returned in the one place that cannot lie about the
+status code.
+
+- `components/workspace/WorkspaceSkeleton.tsx` — new. The exact markup of the deleted
+  `loading.tsx`, now a plain component.
+- `app/apps/[appId]/page.tsx` — `requireGuest` + `requireAppAccess` + `notFound` still run at the
+  top of the route, then the page returns `<Suspense fallback={<WorkspaceSkeleton />}>` around a
+  `WorkspaceScreen` server component that does the reads. The boundary is below the access check,
+  so access failures never flush a shell.
+- `AGENTS.md` — invariant 11 reworded from "no route-level `loading.tsx`" (which read as "no
+  skeleton at all") to "never route-level; in-page Suspense below the access check", plus the file
+  map entry for the page.
+
+Checked after the change: `npm run typecheck`, `npm run build`, `npm test`, `npm run test:e2e`,
+and a real hard refresh of `/apps/<id>` in a browser against a production build — workspace
+rendered, `404` still returned for an unknown id.
 
 ## Next step
 
-Nothing outstanding for T-001. If the transitional skeleton is wanted back, add a `<Suspense>`
-boundary **inside** `page.tsx` after `requireAppAccess` succeeds, so access failures still return 404
-instead of regressing to the streaming `200`.
+Nothing outstanding for T-001.
 
 ## Open questions
 

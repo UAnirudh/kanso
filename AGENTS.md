@@ -89,18 +89,21 @@ bash docker/smoke-test.sh        # build + volume + restart persistence check
 10. **No new dependencies without a reason written down.** ADR-6/7/8 deliberately avoid component,
     state and charting libraries. Prefer the existing tokens/primitives; if a dependency is truly
     needed, add an ADR.
-11. **No route-level `loading.tsx` on a dynamic route.** It flushes the shell before the access
-    check runs, so a missing or forbidden app answers `200` with a 404 screen instead of `404`, and
-    it is the only boundary that can leave a hard load sitting on a skeleton. Measured 2026-11-24:
-    with `app/apps/[appId]/loading.tsx` present, `/apps/<unknown>` returned 200; without it, 404,
-    with client navigation, reload and a cold load all still rendering in under 0.5 s
-    (`agents/log/2026-11-24-deep-link-skeleton.md`).
+11. **Never put a `loading.tsx` on a dynamic route; use an in-page `Suspense` instead.** A
+    route-level boundary flushes the shell before the page's access check runs, so a missing or
+    forbidden app answers `200` with a 404 screen instead of `404`. Measured 2026-11-24: with
+    `app/apps/[appId]/loading.tsx` present, `/apps/<unknown>` returned 200; without it, 404, with
+    client navigation, reload and a cold load all still rendering in under 0.5 s
+    (`agents/log/2026-11-24-deep-link-skeleton.md`). The pending UI lives in
+    `<Suspense fallback={<WorkspaceSkeleton />}>` **inside** `app/apps/[appId]/page.tsx`, added only
+    after `requireAppAccess` has succeeded — below that point it cannot change the status code, and
+    above it it regresses the 404.
 
 ## 5. Where things live
 
 ```
 app/                        routes, API handlers, server actions (app/actions.ts)
-app/apps/[appId]/page.tsx   workspace entry: access check → load everything → WorkspaceClient
+app/apps/[appId]/page.tsx   workspace entry: access check → Suspense → load everything → WorkspaceClient
 components/workspace/       shell (Sidebar, TopBar), AiPanel, HistoryDrawer, dialogs
 components/workspace/render/  canvas, registry (type → component), the ten component views
 lib/interface/              types, catalog, operations, engine (apply/normalize/pack), store, service,
