@@ -6,7 +6,8 @@ styling are per-user, validated, versioned and reversible.
 
 - Generate a working project workspace from a sentence.
 - Ask for changes in plain language ("move my tasks left, add a progress chart right, dark mode").
-- Preview the change, apply it, undo it, restore any earlier version.
+- Preview the change, apply it, undo it, restore any earlier version, or reset to the generated layout.
+- Rename or delete applications you no longer test with, from the dashboard.
 - Teammates share the data but never each other's layout.
 
 Under the hood the assistant never writes code: it proposes typed operations against a validated
@@ -28,6 +29,10 @@ Open the app — there is no sign-in — describe an application, and you land i
 
 Requirements: Node.js 20.9+ (developed on Node 24), npm. No external services are required —
 SQLite is local, and the interface assistant works without any API key.
+
+**Use Node 20–24.** `better-sqlite3` 12.x ships no prebuilt binary for Node 25+, so `npm install`
+fails there while compiling the native module. Node 24 is what the Docker image and the test suite
+are verified on; `.nvmrc` pins it, so `nvm use` selects the right runtime.
 
 ## Environment
 
@@ -54,13 +59,18 @@ and says so in the UI — it never pretends to be a model.
 | `npm run build` / `npm start` | Production build and server |
 | `npm run typecheck` | `tsc --noEmit` (strict) |
 | `npm test` | Vitest unit suite (engine, planner, validation) |
+| `npm run e2e:setup` | One-time browser setup: Chromium plus its system libraries, no root needed |
 | `npm run test:e2e` | Playwright acceptance suite (starts its own server on :3100 with a fresh DB) |
 | `npm run db:migrate` | Apply pending SQL migrations |
 | `npm run db:reset` | Delete the local database (schema rebuilds on next request) |
 | `node scripts/shots.mjs` | Screenshot the running app to `screenshots/` for visual QA |
 | `node scripts/ai-provider-check.mjs` | Provider error-path check (uses an invalid key against a local server) |
 
-The Playwright suite needs browsers once: `npx playwright install chromium`.
+The Playwright suite needs the browser installed once: `npm run e2e:setup`. The script
+checks the Node version, downloads Chromium, and on Linux extracts the libraries Chromium needs
+(`libnss3`, `libatk`, fonts, …) into `~/.cache/kanso-e2e-deps` when they are missing — Playwright's
+own `install-deps` requires root, this does not. `npm run test:e2e` sources that environment
+automatically. Set `KANSO_E2E_DEPS` to put the prefix somewhere else.
 
 ## How personalization works
 
@@ -106,11 +116,15 @@ doing it — a viewer can rearrange their view but cannot write data, and cannot
 ## Testing
 
 ```bash
+nvm use                       # Node 24 via .nvmrc
 npm run typecheck
 npm test
-npx playwright install chromium
+npm run e2e:setup             # once: Chromium + its system libraries
 npm run test:e2e
 ```
+
+`e2e:setup` is idempotent and reports what it installed. It refuses to run on Node 25+ with an
+explanation rather than failing later inside the native SQLite build.
 
 The acceptance suite (`e2e/acceptance.spec.ts`) covers: guest identity minting with no sign-in,
 application generation, task creation and persistence across reload, the natural-language change

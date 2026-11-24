@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, LayoutGrid, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
+import { AppCardActions, NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
 import { providerInfo } from "@/lib/ai/provider";
 import { requireGuest } from "@/lib/identity";
 import { initials } from "@/lib/format";
@@ -91,10 +91,13 @@ export default async function DashboardPage() {
             ) : (
               <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
                 {apps.map((app) => (
-                  <li key={app.id}>
+                  <li
+                    key={app.id}
+                    className="flex h-full flex-col justify-between overflow-hidden rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] transition-colors hover:border-[#353a45]"
+                  >
                     <Link
                       href={`/apps/${app.id}`}
-                      className="group flex h-full flex-col justify-between rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4 transition-colors hover:border-[#353a45] hover:bg-[#0d0f13]"
+                      className="group flex flex-1 flex-col justify-between p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -117,6 +120,11 @@ export default async function DashboardPage() {
                         <span>{app.openCount} open</span>
                       </div>
                     </Link>
+                    <AppCardActions
+                      appId={app.id}
+                      appName={app.name}
+                      canManage={app.role === "admin" || app.role === "owner"}
+                    />
                   </li>
                 ))}
               </ul>

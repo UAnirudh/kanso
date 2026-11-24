@@ -1,9 +1,14 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
-import { Plus, Sparkles } from "lucide-react";
-import { createApplicationAction, createWorkspaceAction } from "@/app/actions";
+import { Check, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react";
+import {
+  createApplicationAction,
+  createWorkspaceAction,
+  deleteApplicationAction,
+  renameApplicationAction,
+} from "@/app/actions";
 import type { FormState } from "@/lib/form-state";
 
 function Submit({
@@ -119,6 +124,106 @@ export function NewAppForm({
         </p>
         <Submit label="Generate" pendingLabel="Generating…" />
       </div>
+    </form>
+  );
+}
+
+export function AppCardActions({
+  appId,
+  appName,
+  canManage,
+}: {
+  appId: string;
+  appName: string;
+  canManage: boolean;
+}) {
+  const [renaming, setRenaming] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [renameState, renameAction] = useActionState(renameApplicationAction, {} as FormState);
+  const [deleteState, deleteAction] = useActionState(deleteApplicationAction, {} as FormState);
+
+  useEffect(() => {
+    if (renameState.ok) setRenaming(false);
+  }, [renameState]);
+
+  if (!canManage) return null;
+
+  if (renaming) {
+    return (
+      <form action={renameAction} className="flex flex-col gap-1.5 border-t border-[#16191e] px-4 py-2.5">
+        <input type="hidden" name="appId" value={appId} />
+        <div className="flex items-center gap-1.5">
+          <label className="sr-only" htmlFor={`rename-${appId}`}>
+            New name for {appName}
+          </label>
+          <input
+            id={`rename-${appId}`}
+            name="name"
+            defaultValue={appName}
+            maxLength={60}
+            required
+            autoFocus
+            className="field h-[30px] text-[12px]"
+          />
+          <button
+            type="submit"
+            className="btn btn-ghost btn-icon shrink-0"
+            aria-label="Save name"
+          >
+            <Check size={13} aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-icon shrink-0"
+            aria-label="Cancel rename"
+            onClick={() => setRenaming(false)}
+          >
+            <X size={13} aria-hidden />
+          </button>
+        </div>
+        {renameState.error && (
+          <p role="alert" className="text-[11px] text-red-300">
+            {renameState.error}
+          </p>
+        )}
+      </form>
+    );
+  }
+
+  return (
+    <form action={deleteAction} className="flex items-center gap-1.5 border-t border-[#16191e] px-4 py-2">
+      <input type="hidden" name="appId" value={appId} />
+      <button
+        type="button"
+        className="btn btn-ghost btn-sm"
+        onClick={() => setRenaming(true)}
+      >
+        <Pencil size={11} aria-hidden />
+        Rename
+      </button>
+      <button
+        type={confirmDelete ? "submit" : "button"}
+        className={`btn btn-ghost btn-sm ${confirmDelete ? "text-red-300" : ""}`}
+        onClick={() => setConfirmDelete(true)}
+        aria-label={confirmDelete ? `Confirm deleting ${appName}` : `Delete ${appName}`}
+      >
+        <Trash2 size={11} aria-hidden />
+        {confirmDelete ? "Confirm delete" : "Delete"}
+      </button>
+      {confirmDelete && (
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => setConfirmDelete(false)}
+        >
+          Cancel
+        </button>
+      )}
+      {deleteState.error && (
+        <p role="alert" className="ml-auto text-[11px] text-red-300">
+          {deleteState.error}
+        </p>
+      )}
     </form>
   );
 }

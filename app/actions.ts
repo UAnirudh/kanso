@@ -5,7 +5,11 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { requireGuest } from "@/lib/identity";
 import { HttpError } from "@/lib/errors";
-import { generateApplication } from "@/lib/services/generation";
+import {
+  deleteApplication,
+  generateApplication,
+  renameApplication,
+} from "@/lib/services/generation";
 import { createWorkspace } from "@/lib/repo/workspaces";
 import type { FormState } from "@/lib/form-state";
 
@@ -50,6 +54,59 @@ export async function createApplicationAction(
 
   revalidatePath("/dashboard");
   redirect(`/apps/${appId}`);
+}
+
+const appIdSchema = z.string().trim().min(3).max(80);
+
+/** Management rights are enforced inside the service functions. */
+export async function renameApplicationAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const guest = await requireGuest();
+  const parsed = z
+    .object({
+      appId: appIdSchema,
+      name: z.string().trim().min(2, "Give the application a name.").max(60),
+    })
+    .safeParse({ appId: formData.get("appId"), name: formData.get("name") });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the name." };
+  }
+
+  try {
+    renameApplication({
+      appId: parsed.data.appId,
+      userId: guest.id,
+      name: parsed.data.name,
+    });
+  } catch (error) {
+    if (error instanceof HttpError) return { error: error.message };
+    console.error("[rename-application]", error);
+    return { error: "The application could not be renamed. Try again." };
+  }
+  revalidatePath("/dashboard");
+  revalidatePath(`/apps/${parsed.data.appId}`);
+  return { ok: true };
+}
+
+export async function deleteApplicationAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const guest = await requireGuest();
+  const parsed = appIdSchema.safeParse(formData.get("appId"));
+  if (!parsed.success) return { error: "That application could not be found." };
+
+  try {
+    deleteApplication({ appId: parsed.data, userId: guest.id });
+  } catch (error) {
+    if (error instanceof HttpError) return { error: error.message };
+    console.error("[delete-application]", error);
+    return { error: "The application could not be deleted. Try again." };
+  }
+  revalidatePath("/dashboard");
+  return { ok: true };
 }
 
 const workspaceSchema = z.object({
