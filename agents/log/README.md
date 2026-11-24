@@ -57,3 +57,4 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-20 | [Agent docs and collaboration setup](2026-11-20-agent-docs.md) | — |
 | 2026-11-20 | [Docker image, volume persistence, Render review](2026-11-20-docker-persistence.md) | T-002 |
 | 2026-11-24 | [Deep-link skeleton: not reproducible, `loading.tsx` removed](2026-11-24-deep-link-skeleton.md) | T-001 |
+| 2026-11-24 | [Docker smoke test committed as the engine test](2026-11-24-docker-smoke-test.md) | T-003 |
