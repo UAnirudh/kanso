@@ -59,3 +59,5 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-24 | [Deep-link skeleton: not reproducible, `loading.tsx` removed](2026-11-24-deep-link-skeleton.md) | T-001 |
 | 2026-11-24 | [Docker smoke test committed as the engine test](2026-11-24-docker-smoke-test.md) | T-003 |
 | 2026-11-24 | [Dependency advisory triage: production tree to zero](2026-11-24-npm-advisory-triage.md) | T-005 |
+| 2026-11-24 | [E2E confirmation for the zod 4 tree](2026-11-24-e2e-zod4-verification.md) | T-005 |
+| 2026-11-24 | [Vitest 4.1.12: dev-tree advisories to zero](2026-11-24-vitest-advisory-bump.md) | T-006 |
