@@ -221,6 +221,4 @@ live Groq completion (no key on this machine).
 - **Members are browsers, not people.** Removing a member ends that browser's access, but with no
   accounts it can rejoin with a fresh cookie. Removal exists to prune stale browsers from the roster,
   not as a security control.
-- **Access boundary returns a 404 screen with HTTP 200** when the route streams its loading shell
-  (no application data is exposed; the API returns 403).
 - CSV export, real-time collaboration, SSO and billing are not implemented.

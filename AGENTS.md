@@ -4,7 +4,7 @@ Instructions for any AI agent (or human) working in this repository. Read this b
 edit. It is short on purpose: the reasoning lives in the docs listed below, and this file is the
 contract for *how to change things without breaking them*.
 
-Last reviewed: 2026-11-20 (see `agents/log/` for the entry that produced the current state).
+Last reviewed: 2026-11-24 (see `agents/log/` for the entry that produced the current state).
 
 ## 1. What this project is
 
@@ -89,8 +89,12 @@ bash docker/smoke-test.sh        # build + volume + restart persistence check
 10. **No new dependencies without a reason written down.** ADR-6/7/8 deliberately avoid component,
     state and charting libraries. Prefer the existing tokens/primitives; if a dependency is truly
     needed, add an ADR.
-11. **Do not add a route-level `loading.tsx` to a dynamic route.** See the open bug in
-    `agents/tasks.md` (T-001): a hard load of `/apps/[appId]` currently sticks on the skeleton.
+11. **No route-level `loading.tsx` on a dynamic route.** It flushes the shell before the access
+    check runs, so a missing or forbidden app answers `200` with a 404 screen instead of `404`, and
+    it is the only boundary that can leave a hard load sitting on a skeleton. Measured 2026-11-24:
+    with `app/apps/[appId]/loading.tsx` present, `/apps/<unknown>` returned 200; without it, 404,
+    with client navigation, reload and a cold load all still rendering in under 0.5 s
+    (`agents/log/2026-11-24-deep-link-skeleton.md`).
 
 ## 5. Where things live
 
