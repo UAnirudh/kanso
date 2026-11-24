@@ -15,6 +15,14 @@ interface document, which the server checks, previews, applies and versions.
 **Documentation site:** <https://uanirudh.github.io/kanso/> — static project docs only. GitHub
 Pages cannot serve this application (no server runtime, no database); see [Deployment](#deployment).
 
+## Working in this repository
+
+Read [`AGENTS.md`](AGENTS.md) before your first edit: it is the contract for *how* to change things
+(invariants, commands, the verification ladder, and the rules for several agents working at once).
+`CLAUDE.md` points at it. Live coordination state lives in [`agents/`](agents/) — claim a row in
+[`agents/tasks.md`](agents/tasks.md) before you start, and leave a dated handoff in
+[`agents/log/`](agents/log/) when you finish.
+
 ## Quick start
 
 ```bash
@@ -92,6 +100,7 @@ migrations/             SQL schema
 tests/ · e2e/           Vitest unit tests · Playwright acceptance tests
 scripts/                migrations, reset, screenshots, provider check
 PRD.md · ARCHITECTURE.md · IMPLEMENTATION_PLAN.md
+AGENTS.md · CLAUDE.md · agents/   the agent contract, its pointer, and the shared task board + handoff log
 ```
 
 ## Roles
@@ -190,8 +199,11 @@ writable file. Moving to Postgres first is the path (see ADR-1 — queries are c
 
 Verified on this machine: `npm run build`, the migration step, and `next start` with an absolute
 `DATABASE_PATH` and a custom `PORT`, including a real guest-identity → generate → reload flow against that
-production server. **Not verified here:** the Docker image build (Docker is not installed on this
-machine) and the Render deployment itself.
+production server. Also verified: the Docker image build, a container run against a named volume at
+`/var/data` (health 200, server as the unprivileged `kanso` user, real guest data written), data and
+identity surviving `docker restart`, and `PORT=10000` being honoured so Render's injected port works.
+**Not verified here:** the Render deployment itself (local image is arm64, Render builds amd64) and a
+live Groq completion (no key on this machine).
 
 ## Known limitations
 
