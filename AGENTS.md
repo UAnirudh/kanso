@@ -153,7 +153,10 @@ docker/                     entrypoint (chown the mount, drop to `kanso`) + loca
 `npm run typecheck` → `npm test` → `npm run build` (the `verify` job) and `npm run test:e2e`
 (the `e2e` job, after `npx playwright install --with-deps chromium`) both run in CI on every push and
 pull request (`.github/workflows/ci.yml`, Node 22, no `GROQ_API_KEY`). Green CI still does not
-cover the Docker, model-key and `npm audit` checks in this table.
+cover the Docker, model-key and `npm audit` checks in this table. `main` is protected: both
+jobs are required status checks and admin bypass is disabled, so a red pull request cannot merge
+— and a direct push is refused until the checks have run. Every change lands as a pull request
+whose two checks are green.
 
 Report what you actually ran and what you did not. "Not verified" is an acceptable result;
 "verified" for something you only compiled is not.
