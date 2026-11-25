@@ -140,7 +140,7 @@ MVP-level, measurable in this product:
 | Prompt injection via user text or workspace data | The model sees a restricted render of the interface and the user's sentence only; it has no tools, no data writes, no secrets; system prompt treats request text as data; outputs are still validated | A user can only affect their own interface — blast radius is their own screen |
 | Cross-user leakage | Interface documents keyed by `(app, user)`; all queries scoped by workspace membership; restore/undo scoped by user id | None known; tested |
 | Model provider outage / rate limits | Bounded retry, timeouts, provider error mapping to specific HTTP codes, per-user budget, deterministic local fallback | Model path unavailable without a key (documented) |
-| Cost blow-up | 1–5 operations per request, single repair attempt, per-minute budget, max token cap, audit of token usage | No hard monthly spend cap yet |
+| Cost blow-up | 1–5 operations per request, single repair attempt, per-minute budget, global daily token ceiling (`AI_DAILY_TOKEN_CAP`), audit of token usage | No monetary cap; the ceiling is in tokens, not currency |
 | Layout drift / ugly results | Fixed grid with packing, span limits per component, curated default props, design tokens | No visual regression detection yet |
 | SQLite concurrency | WAL mode, single-process server | Not multi-region; see ADR-1 |
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowUpRight, LayoutGrid, Sparkles } from "lucide-react";
+import { ArrowUpRight, ChartColumn, LayoutGrid, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { AppCardActions, NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
 import { providerInfo } from "@/lib/ai/provider";
@@ -22,6 +22,13 @@ export default async function DashboardPage() {
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-5">
           <Brand />
           <div className="flex items-center gap-3">
+            <Link
+              href="/metrics"
+              className="flex items-center gap-1.5 rounded-full border border-[#1c1f25] bg-[#0d0f13] px-2.5 py-1 text-[11.5px] text-[#82858f] transition-colors hover:border-[#353a45] hover:text-[#c8cad2]"
+            >
+              <ChartColumn size={12} aria-hidden />
+              Metrics
+            </Link>
             <span className="hidden items-center gap-1.5 text-[11px] text-[#5f626b] sm:flex">
               <span
                 aria-hidden

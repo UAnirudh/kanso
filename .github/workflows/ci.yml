@@ -1,0 +1,88 @@
+# Verification gate: the checks every change must pass before review.
+# `verify` is the fast job (typecheck, unit tests, production build). `e2e` runs the
+# Playwright acceptance suite, which is what actually pins the API status codes
+# (401/403/404) and the guest/admin role boundaries.
+name: CI
+
+on:
+  push:
+  # Also gate a branch before it merges: a pull request runs these two jobs instead of
+  # only finding out after the commit reaches main. Fork PRs get a read-only token and
+  # no secrets, which is all this workflow uses.
+  pull_request:
+
+# Read-only. The workflow needs no repository write access and no secret: in
+# particular GROQ_API_KEY is never provided, so the AI pipeline exercises the same
+# labelled local-planner path a key-less deployment uses. A green run therefore says
+# nothing about the model path (see T-004).
+permissions:
+  contents: read
+
+# A newer push to the same ref makes the older run obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Same major as the Docker image and Render (node:22-bookworm-slim), and new
+          # enough for vitest 4 -> vite 8, which requires Node 22.12+ (AGENTS.md §8).
+          node-version: "22"
+          cache: npm
+
+      # `npm ci`, not `npm install`: it fails on a manifest/lockfile mismatch, which is
+      # exactly the failure mode that breaks the Docker and Render builds. Catching it
+      # here is cheaper than catching it in an image build.
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npm run build
+
+  # A separate job so the fast feedback above is never held up by a browser download.
+  # The suite starts its own server on :3100 against a fresh SQLite file
+  # (playwright.config.ts -> `npm run e2e:server`), so no service container is needed.
+  e2e:
+    name: playwright acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      # `--with-deps` installs the shared libraries Chromium needs on a bare runner;
+      # without it the browser launches and dies on a missing .so before the first test.
+      # Only chromium: playwright.config.ts defines that project alone.
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run test:e2e
+
+      # trace and screenshot are retain-on-failure / only-on-failure, so on a red run
+      # this archive is the only evidence of what the browser actually saw.
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: test-results
+          retention-days: 7
+          if-no-files-found: ignore

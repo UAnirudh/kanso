@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { WorkspaceClient } from "@/components/workspace/WorkspaceClient";
+import { WorkspaceSkeleton } from "@/components/workspace/WorkspaceSkeleton";
 import { providerInfo } from "@/lib/ai/provider";
-import { requireGuest } from "@/lib/identity";
+import { requireGuest, type Guest } from "@/lib/identity";
 import { HttpError } from "@/lib/errors";
 import { requireAppAccess } from "@/lib/repo/apps";
 import { listActivity, listRecords } from "@/lib/repo/records";
@@ -9,6 +11,8 @@ import { listMembers } from "@/lib/repo/workspaces";
 import { interfaceHistory, loadInterface } from "@/lib/interface/service";
 
 export const dynamic = "force-dynamic";
+
+type AppAccess = ReturnType<typeof requireAppAccess>;
 
 export default async function ApplicationPage({
   params,
@@ -18,7 +22,9 @@ export default async function ApplicationPage({
   const guest = await requireGuest();
   const { appId } = await params;
 
-  let access: ReturnType<typeof requireAppAccess>;
+  // The access check runs before any boundary, so a missing or forbidden app still answers 404
+  // rather than flushing a shell with a 200. Keep the Suspense boundary *below* this point.
+  let access: AppAccess;
   try {
     access = requireAppAccess(appId, guest.id);
   } catch (error) {
@@ -28,6 +34,14 @@ export default async function ApplicationPage({
     throw error;
   }
 
+  return (
+    <Suspense fallback={<WorkspaceSkeleton />}>
+      <WorkspaceScreen access={access} guest={guest} />
+    </Suspense>
+  );
+}
+
+async function WorkspaceScreen({ access, guest }: { access: AppAccess; guest: Guest }) {
   const { document, pages } = loadInterface(access, guest.id);
   const tasks = listRecords(access.app.id, "task");
   const notes = listRecords(access.app.id, "note");

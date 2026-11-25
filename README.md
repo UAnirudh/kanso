@@ -18,6 +18,14 @@ interface document, which the server checks, previews, applies and versions.
 **Documentation site:** <https://uanirudh.github.io/kanso/> — static project docs only. GitHub
 Pages cannot serve this application (no server runtime, no database); see [Deployment](#deployment).
 
+## Working in this repository
+
+Read [`AGENTS.md`](AGENTS.md) before your first edit: it is the contract for *how* to change things
+(invariants, commands, the verification ladder, and the rules for several agents working at once).
+`CLAUDE.md` points at it. Live coordination state lives in [`agents/`](agents/) — claim a row in
+[`agents/tasks.md`](agents/tasks.md) before you start, and leave a dated handoff in
+[`agents/log/`](agents/log/) when you finish.
+
 ## Quick start
 
 ```bash
@@ -45,6 +53,7 @@ are verified on; `.nvmrc` pins it, so `nvm use` selects the right runtime.
 | `GROQ_MODEL` | no | `qwen/qwen3-32b` | Any Groq-supported chat model id |
 | `GROQ_BASE_URL` | no | `https://api.groq.com/openai/v1` | OpenAI-compatible endpoint |
 | `AI_RATE_LIMIT_PER_MINUTE` | no | `8` | Per-user AI edit budget |
+| `AI_DAILY_TOKEN_CAP` | no | `0` (off) | Global daily model-token ceiling; the assistant returns 503 once the day's tokens reach it |
 | `AI_TIMEOUT_MS` | no | `25000` | Upstream request timeout |
 | `NEXT_PUBLIC_APP_URL` | no | `http://localhost:3000` | Public origin used in docs/cookies |
 
@@ -105,6 +114,7 @@ migrations/             SQL schema
 tests/ · e2e/           Vitest unit tests · Playwright acceptance tests
 scripts/                migrations, reset, screenshots, provider check
 PRD.md · ARCHITECTURE.md · IMPLEMENTATION_PLAN.md
+AGENTS.md · CLAUDE.md · agents/   the agent contract, its pointer, and the shared task board + handoff log
 ```
 
 ## Accounts, sessions and budgets
@@ -137,6 +147,25 @@ every guest joins as an `admin` — so clearing one browser's cookie can never l
 nobody able to manage it, and a stale guest can still be retired from the roster. `owner` / `admin`
 manage members and settings · `member` edits tasks and notes · `viewer` reads only. **Interface customization is available to every role** and is always scoped to the person
 doing it — a viewer can rearrange their view but cannot write data, and cannot affect anyone else.
+
+## Metrics
+
+`/metrics` is a read-only page for AI spend and proposal quality, linked from the dashboard.
+The same numbers are available as JSON at `GET /api/metrics`; both read through `loadAiMetrics`,
+and the JSON route needs the device cookie like every other API route and answers
+`cache-control: no-store`.
+
+- `spend` is **global** — today's tokens against `AI_DAILY_TOKEN_CAP`, the budget that can start
+  refusing requests — because the cap is not per workspace.
+- `proposals` covers the last 30 days across the workspaces this browser belongs to. Acceptance
+  is PRD §8's **applied without retry ÷ decided**: a preview still waiting for a decision is not
+  a rejection, so pending stays out of the denominator, and an applied proposal followed by
+  another request from the same browser for the same app within 10 minutes counts as a retry
+  rather than an acceptance.
+- `latencyMs`, `timeToFirstPersonalizationMs` and `tokens` use the same window and scope: p50/p95
+  request latency, the median from a browser's first open (its `init` revision) to its first
+  applied assistant change, and tokens per proposal and per applied change. The local planner
+  records zero tokens, so a key-less run shows real acceptance and latency with zero spend.
 
 ## Testing
 
@@ -230,8 +259,11 @@ writable file. Moving to Postgres first is the path (see ADR-1 — queries are c
 
 Verified on this machine: `npm run build`, the migration step, and `next start` with an absolute
 `DATABASE_PATH` and a custom `PORT`, including a real guest-identity → generate → reload flow against that
-production server. **Not verified here:** the Docker image build (Docker is not installed on this
-machine) and the Render deployment itself.
+production server. Also verified: the Docker image build, a container run against a named volume at
+`/var/data` (health 200, server as the unprivileged `kanso` user, real guest data written), data and
+identity surviving `docker restart`, and `PORT=10000` being honoured so Render's injected port works.
+**Not verified here:** the Render deployment itself (local image is arm64, Render builds amd64) and a
+live Groq completion (no key on this machine).
 
 ## Known limitations
 

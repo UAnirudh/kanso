@@ -13,7 +13,7 @@ const nodeId = z.string().min(1).max(64);
 const span = z.number().int().min(1).max(12);
 const column = z.number().int().min(1).max(12);
 
-const baseProps = z.record(z.unknown()).optional();
+const baseProps = z.record(z.string(), z.unknown()).optional();
 
 /**
  * The complete set of changes the AI (or the visual editor) may perform.
@@ -55,7 +55,7 @@ export const operationSchema = z.discriminatedUnion("op", [
     op: z.literal("updateProps"),
     page: pageKey,
     id: nodeId,
-    props: z.record(z.unknown()),
+    props: z.record(z.string(), z.unknown()),
   }),
   z.object({
     op: z.literal("moveComponent"),

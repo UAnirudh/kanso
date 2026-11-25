@@ -260,6 +260,12 @@ another provider is a new `completeChat` implementation, not a pipeline rewrite.
 - Secrets: `GROQ_API_KEY` is read only in server modules; no `NEXT_PUBLIC_` AI variables; the
   browser never sees the key.
 - XSS: no `dangerouslySetInnerHTML`; model output is data, never markup or code.
+- Browser hardening (ADR-12): one `headers()` rule in `next.config.mjs` sets CSP
+  (`default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`,
+  `form-action 'self'`), `X-Frame-Options: DENY`, `nosniff`,
+  `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` denying
+  camera/microphone/geolocation/payment/usb, and `Cross-Origin-Opener-Policy: same-origin`;
+  HSTS is production-only. `e2e/security.spec.ts` asserts them and that hydration still works.
 
 ## 9. Architecture decision record
 
@@ -339,6 +345,18 @@ session. Nothing is copied, nothing is merged, and a row that never signs up is 
 The accepted trade-off is that a claimed row is no longer addressable by device id, so signing out
 starts a fresh guest rather than returning to the pre-account identity — correct, because the account
 is now the durable identity.
+
+**ADR-12 — Security headers with an inline-script CSP, no nonce middleware yet.**
+Every route ships CSP and the standard hardening headers from `next.config.mjs`. A nonce-based
+CSP is stricter, but the App Router hydrates through inline bootstrap scripts, so a nonce has to
+be generated per request in middleware and threaded through every response — a dynamic hop in
+front of static assets and `/api/health` for an app with no third-party scripts. The accepted
+trade-off is `script-src 'self' 'unsafe-inline'`: nothing can be loaded from another origin, and
+`frame-ancestors`, `object-src` and `base-uri` keep their full value, but injected inline script
+from the app's own response would not be blocked. The app has no `dangerouslySetInnerHTML` and
+the existing XSS boundary is the closed operation vocabulary, so the residual risk is accepted
+for this build. Revisit when a third-party script is added or a stronger CSP is required; the
+change is middleware plus Next's nonce support, not a rewrite.
 
 ## 10. Request flows (concrete)
 

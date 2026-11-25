@@ -1,4 +1,11 @@
-export default function Loading() {
+/**
+ * Pending state for the application workspace.
+ *
+ * Rendered as the `<Suspense>` fallback in `app/apps/[appId]/page.tsx`, inside the boundary that
+ * sits *after* `requireAppAccess`. It must not become a route-level `loading.tsx`: that flushes the
+ * shell before the access check runs and turns a 404 into a 200 (AGENTS.md invariant 11).
+ */
+export function WorkspaceSkeleton() {
   return (
     <div className="flex h-dvh flex-col">
       <div className="flex h-[46px] items-center border-b border-[#16191e] px-3">
