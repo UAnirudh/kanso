@@ -238,12 +238,22 @@ test("application and interface lifecycle controls", async ({ browser }) => {
   await card.getByRole("button", { name: "Save name" }).click();
   await expect(page.getByRole("link", { name: /Renamed lifecycle app/ })).toBeVisible();
 
-  // And deleted, behind a two-step confirmation.
+  // And deleted, behind a two-step confirmation. The first click only arms the button,
+  // so wait for the confirm state before submitting it.
   const renamed = page.locator("li", { hasText: "Renamed lifecycle app" }).first();
   await renamed.getByRole("button", { name: "Delete Renamed lifecycle app" }).click();
-  await renamed
-    .getByRole("button", { name: "Confirm deleting Renamed lifecycle app" })
-    .click();
+  const confirmDelete = renamed.getByRole("button", {
+    name: "Confirm deleting Renamed lifecycle app",
+  });
+  await expect(confirmDelete).toBeEnabled();
+  // Confirming deletes the row this button lives in, so a pointer click races the removal:
+  // Playwright sees the button detach, retries, and waits for a locator that is gone for good
+  // until the test times out (the delete itself already happened). Submit the form the button
+  // belongs to instead, then wait for the row to disappear.
+  await confirmDelete.evaluate((button) => {
+    const form = button.closest("form") as HTMLFormElement;
+    form.requestSubmit(button as HTMLButtonElement);
+  });
   await expect(page.getByRole("link", { name: /Renamed lifecycle app/ })).toHaveCount(0);
 
   await context.close();
