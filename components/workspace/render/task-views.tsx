@@ -97,7 +97,7 @@ export function TaskBoardView({ node }: { node: InterfaceNode }) {
                       {api.canEdit && task.status !== "done" && (
                         <button
                           type="button"
-                          className="s-btn s-btn-ghost mt-1 -ml-1.5 h-5 text-[10px]"
+                          className="s-btn s-btn-ghost tap-target tap-target-below mt-1 -ml-1.5 h-5 text-[10px]"
                           onClick={() => api.toggleTask(task)}
                           aria-label={`Mark ${task.title} done`}
                         >
@@ -419,7 +419,7 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
               <button
                 key={task.id}
                 type="button"
-                className="cal-task"
+                className="cal-task tap-target"
                 onClick={() => api.openTask(task)}
                 title={task.title}
               >

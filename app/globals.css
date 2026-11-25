@@ -171,6 +171,11 @@ body {
     height: 44px;
     transform: translate(-50%, -50%);
   }
+  /* For a control at the bottom of a card: the target hangs below the button
+     instead of covering the content above it. */
+  .tap-target-below::after {
+    top: 100%;
+  }
 
   .field {
     width: 100%;
@@ -664,7 +669,9 @@ select.s-input {
   padding: 4px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  /* Keeps stacked task chips 24px apart, so each chip can carry a 44px
+     touch target without covering the chip below it. */
+  gap: 6px;
   overflow: hidden;
   text-align: left;
   cursor: pointer;
@@ -682,16 +689,17 @@ select.s-input {
   color: var(--s-muted);
 }
 .cal-task {
+  display: flex;
+  align-items: center;
+  min-height: 18px;
   font-size: 9.5px;
   line-height: 1.25;
+  white-space: nowrap;
   padding: 1.5px 4px;
   border-radius: 3px;
   background: var(--s-accent-soft);
   color: var(--s-accent);
   font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 }

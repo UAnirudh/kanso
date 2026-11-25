@@ -143,7 +143,7 @@ export function HistoryDrawer({
                 {index !== 0 && (
                   <button
                     type="button"
-                    className="btn btn-ghost btn-sm shrink-0"
+                    className="btn btn-ghost btn-sm tap-target shrink-0"
                     onClick={() => onRestore(revision.id)}
                     disabled={busy}
                     aria-label={`Restore version: ${revision.label}`}

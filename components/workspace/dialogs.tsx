@@ -199,7 +199,7 @@ export function TaskDialog({
             {editing && state?.task && canEdit && (
               <button
                 type="button"
-                className={`btn ${confirmDelete ? "btn-danger" : "btn-ghost"} btn-sm`}
+                className={`btn tap-target ${confirmDelete ? "btn-danger" : "btn-ghost"} btn-sm`}
                 onClick={async () => {
                   if (!confirmDelete) {
                     setConfirmDelete(true);
