@@ -1,0 +1,47 @@
+# Verification gate: the three checks every change must pass before review.
+# The Playwright suite is deliberately not here — it lives in AGENTS.md §7 and needs
+# a browser install plus a fresh database, so it stays a local/on-demand check for now.
+name: CI
+
+on:
+  push:
+
+# Read-only. The workflow needs no repository write access and no secret: in
+# particular GROQ_API_KEY is never provided, so the AI pipeline exercises the same
+# labelled local-planner path a key-less deployment uses. A green run therefore says
+# nothing about the model path (see T-004).
+permissions:
+  contents: read
+
+# A newer push to the same ref makes the older run obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck · test · build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Same major as the Docker image and Render (node:22-bookworm-slim), and new
+          # enough for vitest 4 -> vite 8, which requires Node 22.12+ (AGENTS.md §8).
+          node-version: "22"
+          cache: npm
+
+      # `npm ci`, not `npm install`: it fails on a manifest/lockfile mismatch, which is
+      # exactly the failure mode that breaks the Docker and Render builds. Catching it
+      # here is cheaper than catching it in an image build.
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm test
+
+      - run: npm run build
