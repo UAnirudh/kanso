@@ -113,6 +113,18 @@ nobody able to manage it, and a stale guest can still be retired from the roster
 manage members and settings · `member` edits tasks and notes · `viewer` reads only. **Interface customization is available to every role** and is always scoped to the person
 doing it — a viewer can rearrange their view but cannot write data, and cannot affect anyone else.
 
+## Metrics
+
+`GET /api/metrics` is a read-only JSON view of AI spend and proposal quality. It needs the device
+cookie like every other API route, and answers `cache-control: no-store`.
+
+- `spend` is **global** — today's tokens against `AI_DAILY_TOKEN_CAP`, the budget that can start
+  refusing requests — because the cap is not per workspace.
+- `proposals`, `latencyMs` and `tokens` cover the last 30 days across the workspaces this browser
+  belongs to: acceptance rate (applied ÷ generated, PRD §8), p50/p95 latency, and tokens per
+  proposal and per applied change. The local planner records zero tokens, so a key-less run
+  shows real acceptance and latency with zero spend.
+
 ## Testing
 
 ```bash

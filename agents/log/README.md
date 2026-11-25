@@ -66,3 +66,4 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-25 | [CI part 3: e2e green on the runner, pull request trigger](2026-11-25-ci-pr-trigger.md) | T-007 |
 | 2026-11-25 | [Branch protection: both CI jobs required on main](2026-11-25-required-checks.md) | T-013 |
 | 2026-11-25 | [Global daily AI token cap](2026-11-25-ai-spend-cap.md) | T-008 |
+| 2026-11-25 | [Metrics endpoint and the created_at index](2026-11-25-ai-metrics.md) | T-014 |
