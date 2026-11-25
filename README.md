@@ -115,8 +115,10 @@ doing it — a viewer can rearrange their view but cannot write data, and cannot
 
 ## Metrics
 
-`GET /api/metrics` is a read-only JSON view of AI spend and proposal quality. It needs the device
-cookie like every other API route, and answers `cache-control: no-store`.
+`/metrics` is a read-only page for AI spend and proposal quality, linked from the dashboard.
+The same numbers are available as JSON at `GET /api/metrics`; both read through `loadAiMetrics`,
+and the JSON route needs the device cookie like every other API route and answers
+`cache-control: no-store`.
 
 - `spend` is **global** — today's tokens against `AI_DAILY_TOKEN_CAP`, the budget that can start
   refusing requests — because the cap is not per workspace.
