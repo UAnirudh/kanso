@@ -152,8 +152,8 @@ docker/                     entrypoint (chown the mount, drop to `kanso`) + loca
 | Cross-cutting | full ladder: `typecheck` → `test` → `build` → `test:e2e` |
 
 `npm run typecheck` → `npm test` → `npm run build` (the `verify` job) and `npm run test:e2e`
-(the `e2e` job, after `npx playwright install --with-deps chromium`) run in CI on every push and
-pull request, next to `migrations` (a database at the previous migration, then the pending files
+(the `e2e` job, after `npx playwright install --with-deps chromium`) run in CI on every pull request and
+every push to `main`, next to `migrations` (a database at the previous migration, then the pending files
 and `PRAGMA foreign_key_check`), `docker` (image build + `bash docker/smoke-test.sh`) and `audit`
 (`npm audit --audit-level=high`) — `.github/workflows/ci.yml`, Node 22, no `GROQ_API_KEY`. The
 only row in this table CI still cannot run is the model-key check. `main` is protected: `verify`
