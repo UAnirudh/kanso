@@ -159,10 +159,12 @@ body {
   }
   /* Icon controls stay visually small; touch input gets a 44px target around
      them so a thumb can land without aiming. */
-  .tap-target {
+  .tap-target,
+  .btn-sm {
     position: relative;
   }
-  .tap-target::after {
+  .tap-target::after,
+  .btn-sm::after {
     content: "";
     position: absolute;
     left: 50%;
@@ -700,6 +702,17 @@ select.s-input {
   background: var(--s-accent-soft);
   color: var(--s-accent);
   font-weight: 500;
+}
+/* Stacked chips share one cell, so each target grows away from its neighbour:
+   the first upwards over the day number, the second downwards. */
+.cal-task.tap-target::after {
+  top: 0;
+  transform: translate(-50%, -22px);
+}
+.cal-task.tap-target:nth-of-type(2)::after {
+  top: auto;
+  bottom: 0;
+  transform: translate(-50%, 22px);
 }
 
 }

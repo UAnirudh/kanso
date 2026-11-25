@@ -153,14 +153,16 @@ export function TaskListView({ node }: { node: InterfaceNode }) {
             const due = dueMeta(task.dueDate);
             return (
               <li key={task.id} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
-                <input
-                  type="checkbox"
-                  className="mt-[3px] h-3.5 w-3.5 shrink-0 cursor-pointer accent-[var(--s-accent)]"
-                  checked={task.status === "done"}
-                  disabled={!api.canEdit || api.busy}
-                  onChange={() => api.toggleTask(task)}
-                  aria-label={`Mark ${task.title} complete`}
-                />
+                <label className="tap-target mt-[3px] grid h-3.5 w-3.5 shrink-0 place-items-center">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 cursor-pointer accent-[var(--s-accent)]"
+                    checked={task.status === "done"}
+                    disabled={!api.canEdit || api.busy}
+                    onChange={() => api.toggleTask(task)}
+                    aria-label={`Mark ${task.title} complete`}
+                  />
+                </label>
                 <button
                   type="button"
                   onClick={() => api.openTask(task)}
@@ -381,7 +383,7 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
           </button>
           <button
             type="button"
-            className="s-btn s-btn-ghost h-6 px-1.5 text-[10.5px]"
+            className="s-btn s-btn-ghost tap-target h-6 px-1.5 text-[10.5px]"
             onClick={() => updateOffset(0)}
             disabled={offset === 0}
           >
