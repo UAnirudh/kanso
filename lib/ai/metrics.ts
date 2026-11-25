@@ -10,13 +10,20 @@ export interface AiMetricsView {
   spend: { today: number; cap: number | null; remaining: number | null };
   proposals: {
     total: number;
+    /** applied + discarded + failed: proposals the user actually decided on. */
+    resolved: number;
+    /** Applied and not followed by another request inside the retry window. */
+    accepted: number;
     applied: number;
+    retried: number;
     pending: number;
     discarded: number;
     failed: number;
     acceptanceRate: number | null;
+    retryWindowSeconds: number;
   };
   latencyMs: { p50: number | null; p95: number | null; samples: number };
+  timeToFirstPersonalizationMs: { p50: number | null; samples: number };
   tokens: { total: number; perProposal: number | null; perAppliedChange: number | null };
 }
 
@@ -32,10 +39,17 @@ export function buildAiMetrics(input: {
   tokensUsedToday: number;
   days: number;
   since: string;
+  retryWindowMs: number;
 }): AiMetricsView {
   const { usage } = input;
   const cap = dailyTokenCap();
   const totalTokens = usage.tokensIn + usage.tokensOut;
+
+  // PRD §8's rate is about proposals that got a decision. A preview still sitting
+  // in the panel is not a rejection, so pending rows stay out of the denominator,
+  // and an applied proposal the user immediately re-asked about counts as a retry.
+  const resolved = usage.applied + usage.discarded + usage.failed;
+  const accepted = Math.max(0, usage.applied - usage.retriedApplied);
 
   return {
     window: { days: input.days, since: input.since },
@@ -48,18 +62,24 @@ export function buildAiMetrics(input: {
     },
     proposals: {
       total: usage.total,
+      resolved,
+      accepted,
       applied: usage.applied,
+      retried: usage.retriedApplied,
       pending: usage.proposed,
       discarded: usage.discarded,
       failed: usage.failed,
-      // PRD §8's "applied without retry" over every generated proposal.
-      acceptanceRate:
-        usage.total === 0 ? null : Number((usage.applied / usage.total).toFixed(3)),
+      acceptanceRate: resolved === 0 ? null : Number((accepted / resolved).toFixed(3)),
+      retryWindowSeconds: Math.round(input.retryWindowMs / 1000),
     },
     latencyMs: {
       p50: percentile(usage.latencies, 50),
       p95: percentile(usage.latencies, 95),
       samples: usage.latencies.length,
+    },
+    timeToFirstPersonalizationMs: {
+      p50: percentile(usage.firstPersonalizationMs, 50),
+      samples: usage.firstPersonalizationMs.length,
     },
     tokens: {
       total: totalTokens,

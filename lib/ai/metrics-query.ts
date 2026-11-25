@@ -1,5 +1,5 @@
 import { buildAiMetrics, type AiMetricsView } from "./metrics";
-import { aiTokensUsedToday, aiUsageMetrics } from "../repo/ai";
+import { AI_RETRY_WINDOW_MS, aiTokensUsedToday, aiUsageMetrics } from "../repo/ai";
 
 /**
  * The one place that decides what "the metrics" mean: a 30-day proposal window
@@ -14,9 +14,10 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export function loadAiMetrics(userId: string, days = METRICS_WINDOW_DAYS): AiMetricsView {
   const since = new Date(Date.now() - days * DAY_MS).toISOString();
   return buildAiMetrics({
-    usage: aiUsageMetrics(userId, since),
+    usage: aiUsageMetrics(userId, since, AI_RETRY_WINDOW_MS),
     tokensUsedToday: aiTokensUsedToday(),
     days,
     since,
+    retryWindowMs: AI_RETRY_WINDOW_MS,
   });
 }

@@ -20,6 +20,15 @@ function millis(value: number | null): string {
   return value === null ? "—" : `${count(value)} ms`;
 }
 
+function duration(value: number | null): string {
+  if (value === null) return "—";
+  if (value < 1_000) return `${value} ms`;
+  const seconds = value / 1_000;
+  if (seconds < 60) return `${seconds < 10 ? seconds.toFixed(1) : Math.round(seconds)} s`;
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}m ${Math.round(seconds % 60)}s`;
+}
+
 /**
  * A read-only rendering of `/api/metrics`, for the same numbers without curl.
  * The server component reads the repo directly rather than fetching its own API;
@@ -124,7 +133,8 @@ export default async function MetricsPage() {
                 {percent(proposals.acceptanceRate)}
               </span>
               <span className="mt-1 block text-[11px] leading-relaxed text-[#6b6f7a]">
-                {count(proposals.applied)} applied of {count(proposals.total)} generated
+                {count(proposals.accepted)} of {count(proposals.resolved)} decided, no re-ask within{" "}
+                {Math.round(proposals.retryWindowSeconds / 60)} min
               </span>
             </dd>
           </div>
@@ -141,7 +151,7 @@ export default async function MetricsPage() {
                 </span>
               </span>
               <span className="mt-1 block text-[11px] leading-relaxed text-[#6b6f7a]">
-                {count(proposals.pending)} pending a decision
+                {count(proposals.pending)} pending · not counted in the rate
               </span>
             </dd>
           </div>
@@ -192,10 +202,49 @@ export default async function MetricsPage() {
         </dl>
 
         <section className="mt-8 rounded-[12px] border border-[#1c1f25] bg-[#0b0c0f] p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[13px] font-semibold text-[#c8cad2]">
+              Time to first personalization
+            </h2>
+            <span className="rounded-full border border-[#262a32] px-2 py-0.5 text-[10.5px] text-[#82858f]">
+              PRD target &lt; 90 s
+            </span>
+          </div>
+          <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[#6b6f7a]">
+            From this browser's first open of an app — when its interface was initialized — to
+            the first assistant change it actually applied.
+          </p>
+          <dl className="mt-4 flex flex-wrap items-end gap-x-10 gap-y-3">
+            <div>
+              <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+                Median
+              </dt>
+              <dd className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
+                {duration(metrics.timeToFirstPersonalizationMs.p50)}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+                Samples
+              </dt>
+              <dd className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
+                {count(metrics.timeToFirstPersonalizationMs.samples)}
+              </dd>
+            </div>
+          </dl>
+          {metrics.timeToFirstPersonalizationMs.samples === 0 && (
+            <p className="mt-4 rounded-[10px] border border-dashed border-[#262a32] px-4 py-3 text-[12px] text-[#6b6f7a]">
+              Nothing in this window yet — apply one assistant change and the first sample appears.
+            </p>
+          )}
+        </section>
+
+        <section className="mt-8 rounded-[12px] border border-[#1c1f25] bg-[#0b0c0f] p-5">
           <h2 className="text-[13px] font-semibold text-[#c8cad2]">Proposal outcomes</h2>
           <p className="mt-1 text-[12px] text-[#6b6f7a]">
-            Every proposal the assistant generated, by what happened to it. Acceptance counts
-            applied over generated — a discarded preview still counts as generated.
+            Every proposal the assistant generated, by what happened to it. The acceptance rate
+            above counts applied without a retry over decided proposals (applied + discarded +
+            failed), so a preview still waiting for a decision does not move it.
           </p>
 
           <table className="mt-3 w-full text-[12.5px]">
@@ -248,6 +297,16 @@ export default async function MetricsPage() {
             </tfoot>
           </table>
 
+          {proposals.retried > 0 && (
+            <p className="mt-3 text-[11.5px] leading-relaxed text-[#6b6f7a]">
+              {count(proposals.retried)} applied {proposals.retried === 1 ? "proposal was" : "proposals were"}{" "}
+              followed by another request for the same app within{" "}
+              {Math.round(proposals.retryWindowSeconds / 60)} minutes, so{" "}
+              {proposals.retried === 1 ? "it counts" : "they count"} as a retry rather than a
+              first-time acceptance.
+            </p>
+          )}
+
           {proposals.total === 0 && (
             <p className="mt-4 rounded-[10px] border border-dashed border-[#262a32] px-4 py-3 text-[12px] leading-relaxed text-[#6b6f7a]">
               Nothing in this window yet. Ask the assistant for a change on any application and its
@@ -265,7 +324,8 @@ export default async function MetricsPage() {
 
         <p className="mt-6 text-[11px] leading-relaxed text-[#5f626b]">
           The local planner records no tokens, so a run without a model key shows real acceptance
-          and latency with zero spend. Percentiles are nearest-rank.
+          and latency with zero spend. Percentiles are nearest-rank; a retry is another request
+          from the same browser for the same app inside the window above.
         </p>
       </main>
     </div>
