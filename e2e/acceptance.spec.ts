@@ -215,7 +215,15 @@ test("application and interface lifecycle controls", async ({ browser }) => {
   await page.getByRole("button", { name: "Save note" }).click();
   await expect(page.getByText("Temporary note").first()).toBeVisible();
   await page.getByRole("button", { name: "Delete note Temporary note" }).click();
-  await page.getByRole("button", { name: "Confirm deleting note Temporary note" }).click();
+  const confirmNote = page.getByRole("button", {
+    name: "Confirm deleting note Temporary note",
+  });
+  await expect(confirmNote).toBeEnabled();
+  // Confirming removes the row this control lives in, so a pointer click races the removal:
+  // Playwright sees the button detach, retries, and waits for a locator that is gone for good
+  // until the test times out (the delete itself already happened). The note control is a plain
+  // button rather than a form submit, so activate it in-page and then wait for the note to go.
+  await confirmNote.evaluate((button) => (button as HTMLButtonElement).click());
   await expect(page.getByText("Temporary note")).toHaveCount(0);
 
   // Reset returns the interface to the layout it was generated with.
