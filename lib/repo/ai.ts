@@ -162,6 +162,27 @@ export function listAiRequests(appId: string, userId: string, limit = 12) {
 }
 
 /**
+ * Total model tokens recorded since 00:00 UTC, across every app and user.
+ *
+ * Failed attempts count: the provider still bills them, and `insertAiRequest`
+ * records the tokens captured before the failure. Local-planner rows add zero.
+ * `created_at` is a UTC ISO string, so a lexicographic comparison is a date one.
+ */
+export function aiTokensUsedToday(now = new Date()): number {
+  const startOfDay = new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()),
+  ).toISOString();
+  const row = getDb()
+    .prepare(
+      `SELECT COALESCE(SUM(COALESCE(tokens_in, 0) + COALESCE(tokens_out, 0)), 0) AS total
+         FROM ai_requests
+        WHERE created_at >= ?`,
+    )
+    .get(startOfDay) as { total: number } | undefined;
+  return Number(row?.total ?? 0);
+}
+
+/**
  * Sliding-window budget so one browser cannot exhaust the shared model quota.
  * Backed by SQLite; a production deployment would use Redis for the same call.
  */

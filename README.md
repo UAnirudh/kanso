@@ -46,6 +46,7 @@ SQLite is local, and the interface assistant works without any API key.
 | `GROQ_MODEL` | no | `qwen/qwen3-32b` | Any Groq-supported chat model id |
 | `GROQ_BASE_URL` | no | `https://api.groq.com/openai/v1` | OpenAI-compatible endpoint |
 | `AI_RATE_LIMIT_PER_MINUTE` | no | `8` | Per-user AI edit budget |
+| `AI_DAILY_TOKEN_CAP` | no | `0` (off) | Global daily model-token ceiling; the assistant returns 503 once the day's tokens reach it |
 | `AI_TIMEOUT_MS` | no | `25000` | Upstream request timeout |
 | `NEXT_PUBLIC_APP_URL` | no | `http://localhost:3000` | Public origin used in docs/cookies |
 
