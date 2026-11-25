@@ -5,8 +5,12 @@
 name: CI
 
 on:
+  # `main` only. A branch push would otherwise start a second copy of both jobs next to
+  # the pull-request run for the same commit. Branch work is gated by the pull request
+  # below, which runs against the merge ref and is what `main`'s protection blocks on.
   push:
-  # Also gate a branch before it merges: a pull request runs these two jobs instead of
+    branches: [main]
+  # Gate a branch before it merges: a pull request runs these two jobs instead of
   # only finding out after the commit reaches main. Fork PRs get a read-only token and
   # no secrets, which is all this workflow uses.
   pull_request:
