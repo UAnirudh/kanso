@@ -220,7 +220,14 @@ export default async function MetricsPage() {
                 Median
               </dt>
               <dd className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
-                {duration(metrics.timeToFirstPersonalizationMs.p50)}
+                {metrics.timeToFirstPersonalizationMs.p50 === null ? (
+                  <>
+                    <span aria-hidden>—</span>
+                    <span className="sr-only">No sample yet</span>
+                  </>
+                ) : (
+                  duration(metrics.timeToFirstPersonalizationMs.p50)
+                )}
               </dd>
             </div>
             <div>
@@ -234,7 +241,8 @@ export default async function MetricsPage() {
           </dl>
           {metrics.timeToFirstPersonalizationMs.samples === 0 && (
             <p className="mt-4 rounded-[10px] border border-dashed border-[#262a32] px-4 py-3 text-[12px] text-[#6b6f7a]">
-              Nothing in this window yet — apply one assistant change and the first sample appears.
+              No first personalization from this browser in the window yet — apply one assistant
+              change and the first sample appears.
             </p>
           )}
         </section>
