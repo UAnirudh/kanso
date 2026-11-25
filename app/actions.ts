@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { clientOrigin } from "@/lib/client-origin";
 import {
   SESSION_COOKIE,
   getViewer,
@@ -12,6 +13,7 @@ import {
 } from "@/lib/identity";
 import {
   assertSignInAllowed,
+  assertSignInOriginAllowed,
   assertSignUpAllowed,
   authenticate,
   claimAccount,
@@ -200,7 +202,10 @@ export async function signInAction(
   // Counted before verification, so a burst of guesses is throttled whether or
   // not any of them would have matched.
   try {
+    // Two budgets, because they stop different attacks: one password tried many
+    // times, and one guess sprayed across many addresses from one network.
     assertSignInAllowed(parsed.data.email);
+    assertSignInOriginAllowed(await clientOrigin());
   } catch (error) {
     if (error instanceof HttpError) return { error: error.message };
     throw error;

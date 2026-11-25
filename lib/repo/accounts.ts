@@ -34,6 +34,7 @@ export const MIN_PASSWORD_LENGTH = 8;
 
 export const SIGN_IN_ATTEMPT_LIMIT = 5;
 export const SIGN_IN_WINDOW_MS = 15 * 60 * 1000;
+export const SIGN_IN_ORIGIN_LIMIT = 20;
 export const SIGN_UP_ATTEMPT_LIMIT = 3;
 export const SIGN_UP_WINDOW_MS = 60 * 60 * 1000;
 
@@ -68,8 +69,7 @@ export function assertSignInAllowed(rawEmail: string, now: number = Date.now()):
 }
 
 export function assertSignUpAllowed(rawEmail: string, now: number = Date.now()): void {
-  if (
-    !consumeRateLimit(
+  if (!consumeRateLimit(
       credentialBucket("signup", rawEmail),
       SIGN_UP_ATTEMPT_LIMIT,
       SIGN_UP_WINDOW_MS,
@@ -77,6 +77,39 @@ export function assertSignUpAllowed(rawEmail: string, now: number = Date.now()):
     )
   ) {
     throw new HttpError(429, "Too many accounts created from here. Try again later.");
+  }
+}
+
+/**
+ * A second, wider budget for the caller's own address.
+ *
+ * The per-email budget stops guessing one password. It does nothing against one
+ * guess each across a thousand addresses, which is cheap because every attempt
+ * is a separate account. This bucket counts all sign-in attempts from one origin
+ * in the same window, so a spread-out guess eventually costs something. The limit
+ * is deliberately higher than the per-email one: people behind one NAT or office
+ * network share an origin, and a handful of typos must not lock a team out.
+ *
+ * The origin is hashed into the bucket, so the event table never stores an IP.
+ */
+export function assertSignInOriginAllowed(origin: string, now: number = Date.now()): void {
+  const fingerprint = crypto
+    .createHash("sha256")
+    .update(`origin:${origin}`)
+    .digest("hex")
+    .slice(0, 24);
+  if (
+    !consumeRateLimit(
+      `auth:signin:origin:${fingerprint}`,
+      SIGN_IN_ORIGIN_LIMIT,
+      SIGN_IN_WINDOW_MS,
+      now,
+    )
+  ) {
+    throw new HttpError(
+      429,
+      `Too many sign-in attempts from this network. Wait ${SIGN_IN_WINDOW_MS / 60_000} minutes and try again.`,
+    );
   }
 }
 

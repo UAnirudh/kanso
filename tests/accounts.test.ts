@@ -159,6 +159,41 @@ describe("credential attempt budgets", () => {
     expect(() => accounts.assertSignInAllowed("new@example.com", start + 10)).not.toThrow();
   });
 
+  it("throttles a whole network spreading guesses across addresses", () => {
+    const start = Date.UTC(2026, 0, 4);
+    const origin = "203.0.113.7";
+
+    // One attempt per address defeats the per-email budget, but not this one.
+    for (let attempt = 0; attempt < accounts.SIGN_IN_ORIGIN_LIMIT; attempt += 1) {
+      expect(() => accounts.assertSignInOriginAllowed(origin, start + attempt)).not.toThrow();
+    }
+    expect(() => accounts.assertSignInOriginAllowed(origin, start + 30)).toThrow(
+      /Too many sign-in attempts from this network/,
+    );
+
+    // Another network keeps its own budget, and the window slides.
+    expect(() => accounts.assertSignInOriginAllowed("198.51.100.4", start + 30)).not.toThrow();
+    expect(() =>
+      accounts.assertSignInOriginAllowed(origin, start + accounts.SIGN_IN_WINDOW_MS + 1),
+    ).not.toThrow();
+  });
+
+  it("keeps the origin budget separate from any single address", () => {
+    const start = Date.UTC(2026, 0, 5);
+    const origin = "203.0.113.9";
+
+    for (let attempt = 0; attempt < accounts.SIGN_IN_ATTEMPT_LIMIT; attempt += 1) {
+      accounts.assertSignInAllowed("one@example.com", start + attempt);
+      accounts.assertSignInOriginAllowed(origin, start + attempt);
+    }
+
+    // The address is exhausted but the network is not...
+    expect(() => accounts.assertSignInAllowed("one@example.com", start + 10)).toThrow(HttpError);
+    expect(() => accounts.assertSignInOriginAllowed(origin, start + 10)).not.toThrow();
+    // ...and an untouched address on that network still has its own budget.
+    expect(() => accounts.assertSignInAllowed("two@example.com", start + 10)).not.toThrow();
+  });
+
   it("ignores the case an attempt was typed in", () => {
     const start = Date.UTC(2026, 0, 3);
     for (let attempt = 0; attempt < accounts.SIGN_IN_ATTEMPT_LIMIT; attempt += 1) {
