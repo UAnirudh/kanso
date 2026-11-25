@@ -151,9 +151,9 @@ docker/                     entrypoint (chown the mount, drop to `kanso`) + loca
 | Cross-cutting | full ladder: `typecheck` → `test` → `build` → `test:e2e` |
 
 `npm run typecheck` → `npm test` → `npm run build` (the `verify` job) and `npm run test:e2e`
-(the `e2e` job, after `npx playwright install --with-deps chromium`) both run in CI on every
-push (`.github/workflows/ci.yml`, Node 22, no `GROQ_API_KEY`). Green CI still does not cover
-the Docker, model-key and `npm audit` checks in this table.
+(the `e2e` job, after `npx playwright install --with-deps chromium`) both run in CI on every push and
+pull request (`.github/workflows/ci.yml`, Node 22, no `GROQ_API_KEY`). Green CI still does not
+cover the Docker, model-key and `npm audit` checks in this table.
 
 Report what you actually ran and what you did not. "Not verified" is an acceptable result;
 "verified" for something you only compiled is not.

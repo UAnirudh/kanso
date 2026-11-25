@@ -63,3 +63,4 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-24 | [Vitest 4.1.12: dev-tree advisories to zero](2026-11-24-vitest-advisory-bump.md) | T-006 |
 | 2026-11-25 | [CI gate: typecheck, unit tests and build on every push](2026-11-25-ci-gate.md) | T-007 |
 | 2026-11-25 | [CI part 2: first green run, Playwright acceptance job](2026-11-25-ci-playwright.md) | T-007 |
+| 2026-11-25 | [CI part 3: e2e green on the runner, pull request trigger](2026-11-25-ci-pr-trigger.md) | T-007 |
