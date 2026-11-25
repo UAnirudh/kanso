@@ -253,7 +253,7 @@ export function NotesPanelView({ node }: { node: InterfaceNode }) {
                         ? `Confirm deleting note ${note.title}`
                         : `Delete note ${note.title}`
                     }
-                    className={`-mr-1 -mt-0.5 shrink-0 rounded-[4px] px-1 py-0.5 text-[9.5px] transition-colors disabled:opacity-40 ${
+                    className={`relative -mr-1 -mt-0.5 shrink-0 rounded-[4px] px-1 py-0.5 text-[9.5px] transition-colors after:absolute after:left-1/2 after:top-1/2 after:h-11 after:w-11 after:-translate-x-1/2 after:-translate-y-1/2 after:content-[''] disabled:opacity-40 ${
                       confirming === note.id
                         ? "bg-red-500/15 font-medium text-red-400"
                         : "text-[var(--s-muted)] hover:bg-red-500/10 hover:text-red-400"
