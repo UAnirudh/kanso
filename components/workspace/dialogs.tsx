@@ -464,7 +464,7 @@ export function MembersDialog({
                 </label>
                 <select
                   id={`role-${member.userId}`}
-                  className="field h-11 w-[92px] text-[11.5px]"
+                  className="field role-select w-[92px] text-[11.5px]"
                   value={member.role}
                   disabled={busy}
                   onChange={async (event) => {

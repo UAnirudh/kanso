@@ -213,6 +213,19 @@ body {
     line-height: 1.5;
     resize: vertical;
   }
+  /* A native select cannot carry a pseudo-element target, so on touch screens
+     the role picker grows to 44px; desktop dialogs keep the compact control. */
+  .role-select {
+    height: 28px;
+  }
+  @media (pointer: coarse) {
+    .role-select {
+      height: 44px;
+    }
+    select.role-select {
+      background-position: calc(100% - 15px) center, calc(100% - 10px) center;
+    }
+  }
 
   .label {
     display: block;
