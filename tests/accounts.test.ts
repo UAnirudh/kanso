@@ -194,6 +194,22 @@ describe("credential attempt budgets", () => {
     expect(() => accounts.assertSignInAllowed("two@example.com", start + 10)).not.toThrow();
   });
 
+  it("caps sign-up per network at the same limit as sign-in", () => {
+    const start = Date.UTC(2026, 0, 6);
+    const origin = "203.0.113.30";
+
+    for (let attempt = 0; attempt < accounts.SIGN_UP_ORIGIN_LIMIT; attempt += 1) {
+      expect(() => accounts.assertSignUpOriginAllowed(origin, start + attempt)).not.toThrow();
+    }
+    expect(() => accounts.assertSignUpOriginAllowed(origin, start + 30)).toThrow(
+      /Too many accounts created from this network/,
+    );
+
+    // The two origin buckets are independent, and another network is untouched.
+    expect(() => accounts.assertSignInOriginAllowed(origin, start + 30)).not.toThrow();
+    expect(() => accounts.assertSignUpOriginAllowed("198.51.100.9", start + 30)).not.toThrow();
+  });
+
   it("ignores the case an attempt was typed in", () => {
     const start = Date.UTC(2026, 0, 3);
     for (let attempt = 0; attempt < accounts.SIGN_IN_ATTEMPT_LIMIT; attempt += 1) {

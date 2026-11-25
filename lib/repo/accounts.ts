@@ -37,6 +37,7 @@ export const SIGN_IN_WINDOW_MS = 15 * 60 * 1000;
 export const SIGN_IN_ORIGIN_LIMIT = 20;
 export const SIGN_UP_ATTEMPT_LIMIT = 3;
 export const SIGN_UP_WINDOW_MS = 60 * 60 * 1000;
+export const SIGN_UP_ORIGIN_LIMIT = SIGN_IN_ORIGIN_LIMIT;
 
 const SCRYPT = { N: 16384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 } as const;
 const KEY_LENGTH = 64;
@@ -92,15 +93,19 @@ export function assertSignUpAllowed(rawEmail: string, now: number = Date.now()):
  *
  * The origin is hashed into the bucket, so the event table never stores an IP.
  */
-export function assertSignInOriginAllowed(origin: string, now: number = Date.now()): void {
+function originBucket(kind: "signin" | "signup", origin: string): string {
   const fingerprint = crypto
     .createHash("sha256")
     .update(`origin:${origin}`)
     .digest("hex")
     .slice(0, 24);
+  return `auth:${kind}:origin:${fingerprint}`;
+}
+
+export function assertSignInOriginAllowed(origin: string, now: number = Date.now()): void {
   if (
     !consumeRateLimit(
-      `auth:signin:origin:${fingerprint}`,
+      originBucket("signin", origin),
       SIGN_IN_ORIGIN_LIMIT,
       SIGN_IN_WINDOW_MS,
       now,
@@ -109,6 +114,27 @@ export function assertSignInOriginAllowed(origin: string, now: number = Date.now
     throw new HttpError(
       429,
       `Too many sign-in attempts from this network. Wait ${SIGN_IN_WINDOW_MS / 60_000} minutes and try again.`,
+    );
+  }
+}
+
+/**
+ * The same network cap for account creation, in its own bucket so signing up
+ * cannot spend a sign-in budget (or the reverse). Twenty attempts per window is
+ * generous for a team and far too few for a script creating accounts in bulk.
+ */
+export function assertSignUpOriginAllowed(origin: string, now: number = Date.now()): void {
+  if (
+    !consumeRateLimit(
+      originBucket("signup", origin),
+      SIGN_UP_ORIGIN_LIMIT,
+      SIGN_IN_WINDOW_MS,
+      now,
+    )
+  ) {
+    throw new HttpError(
+      429,
+      `Too many accounts created from this network. Wait ${SIGN_IN_WINDOW_MS / 60_000} minutes and try again.`,
     );
   }
 }

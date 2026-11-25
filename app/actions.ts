@@ -15,6 +15,7 @@ import {
   assertSignInAllowed,
   assertSignInOriginAllowed,
   assertSignUpAllowed,
+  assertSignUpOriginAllowed,
   authenticate,
   claimAccount,
   createSession,
@@ -160,7 +161,10 @@ export async function signUpAction(
   }
 
   try {
+    // Same two dimensions as sign-in: one address cannot be retried, and one
+    // network cannot create accounts across many addresses in bulk.
     assertSignUpAllowed(parsed.data.email);
+    assertSignUpOriginAllowed(await clientOrigin());
   } catch (error) {
     if (error instanceof HttpError) return { error: error.message };
     throw error;
