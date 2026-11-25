@@ -56,6 +56,19 @@ test("per-browser adaptive interface over one shared workspace", async ({ browse
     pageA.getByRole("button", { name: "Open Review the launch checklist" }),
   ).toBeVisible();
 
+  // 3b. The app's shared data exports as a downloadable JSON file, and the file
+  // carries the record that was just created.
+  const appIdA = pageA.url().split("/apps/")[1]!;
+  const exported = await pageA.request.get(`/api/apps/${appIdA}/export`);
+  expect(exported.status()).toBe(200);
+  expect(exported.headers()["content-disposition"]).toContain("attachment; filename=");
+  const exportBody = (await exported.json()) as {
+    app: { id: string };
+    tasks: Array<{ title: string }>;
+  };
+  expect(exportBody.app.id).toBe(appIdA);
+  expect(exportBody.tasks.map((task) => task.title)).toContain("Review the launch checklist");
+
   // 4. It survives a refresh.
   await pageA.reload();
   await expect(
@@ -203,6 +216,8 @@ test("identity, health and role boundaries are enforced server-side", async ({ b
   // A request without the device cookie never gets an invented identity.
   const anonymous = await context.request.get("/api/apps/app_unknown/records");
   expect(anonymous.status()).toBe(401);
+  const anonymousExport = await context.request.get("/api/apps/app_unknown/export");
+  expect(anonymousExport.status()).toBe(401);
 
   // The health endpoint used by Docker and Render answers from the real database.
   const health = await context.request.get("/api/health");
