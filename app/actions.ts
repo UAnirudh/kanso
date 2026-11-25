@@ -1,9 +1,24 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { requireGuest } from "@/lib/identity";
+import {
+  SESSION_COOKIE,
+  getViewer,
+  requireGuest,
+  sessionCookieOptions,
+} from "@/lib/identity";
+import {
+  assertSignInAllowed,
+  assertSignUpAllowed,
+  authenticate,
+  claimAccount,
+  createSession,
+  pruneExpiredSessions,
+  revokeSession,
+} from "@/lib/repo/accounts";
 import { HttpError } from "@/lib/errors";
 import {
   deleteApplication,
@@ -112,6 +127,114 @@ export async function deleteApplicationAction(
 const workspaceSchema = z.object({
   name: z.string().trim().min(2, "Give the workspace a name.").max(60),
 });
+
+const credentialsSchema = z.object({
+  email: z.string().trim().email("Enter a valid email address."),
+  password: z.string().min(8, "Use at least 8 characters."),
+  name: z.string().trim().max(60).optional(),
+});
+
+async function startSession(userId: string): Promise<void> {
+  const ticket = createSession(userId);
+  const jar = await cookies();
+  jar.set(SESSION_COOKIE, ticket.token, sessionCookieOptions());
+}
+
+/**
+ * Claims the browser's guest identity, so signing up keeps the interface
+ * documents and workspace role it already has instead of starting empty.
+ */
+export async function signUpAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const parsed = credentialsSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    name: formData.get("name") || undefined,
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the form." };
+  }
+
+  try {
+    assertSignUpAllowed(parsed.data.email);
+  } catch (error) {
+    if (error instanceof HttpError) return { error: error.message };
+    throw error;
+  }
+
+  const viewer = await getViewer();
+  let userId: string;
+  try {
+    userId = claimAccount({
+      userId: viewer?.id ?? null,
+      email: parsed.data.email,
+      password: parsed.data.password,
+      name: parsed.data.name,
+    }).id;
+  } catch (error) {
+    if (error instanceof HttpError) return { error: error.message };
+    console.error("[sign-up]", error);
+    return { error: "The account could not be created. Try again." };
+  }
+
+  await startSession(userId);
+  pruneExpiredSessions();
+  revalidatePath("/dashboard");
+  redirect("/dashboard");
+}
+
+export async function signInAction(
+  _prev: FormState,
+  formData: FormData,
+): Promise<FormState> {
+  const parsed = credentialsSchema.pick({ email: true, password: true }).safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+  });
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? "Check the form." };
+  }
+
+  // Counted before verification, so a burst of guesses is throttled whether or
+  // not any of them would have matched.
+  try {
+    assertSignInAllowed(parsed.data.email);
+  } catch (error) {
+    if (error instanceof HttpError) return { error: error.message };
+    throw error;
+  }
+
+  const account = authenticate(parsed.data.email, parsed.data.password);
+  if (!account) {
+    // One message for both cases, so the form cannot be used to enumerate emails.
+    return { error: "That email and password do not match an account." };
+  }
+
+  await startSession(account.id);
+  pruneExpiredSessions();
+  revalidatePath("/dashboard");
+  redirect("/dashboard");
+}
+
+/**
+ * Ends this browser's session. The claimed row keeps its credentials and its
+ * data; the device cookie no longer resolves to it, so the next request mints a
+ * fresh guest rather than quietly staying signed in.
+ */
+export async function signOutAction(): Promise<void> {
+  const jar = await cookies();
+  const token = jar.get(SESSION_COOKIE)?.value;
+  if (token) revokeSession(token);
+  // Overwrite rather than `delete`: the redirect below must not be able to leave
+  // a live session cookie behind while the dashboard is still cached as signed
+  // in. Revalidating the layout drops that cached render, so the new guest
+  // identity appears on the first frame instead of after a manual reload.
+  jar.set(SESSION_COOKIE, "", { ...sessionCookieOptions(), maxAge: 0 });
+  revalidatePath("/", "layout");
+  redirect("/dashboard");
+}
 
 export async function createWorkspaceAction(
   _prev: FormState,

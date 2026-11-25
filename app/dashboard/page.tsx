@@ -3,6 +3,7 @@ import { ArrowUpRight, LayoutGrid, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
 import { AppCardActions, NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
 import { providerInfo } from "@/lib/ai/provider";
+import { signOutAction } from "@/app/actions";
 import { requireGuest } from "@/lib/identity";
 import { initials } from "@/lib/format";
 import { listAppsForUser } from "@/lib/repo/apps";
@@ -32,6 +33,17 @@ export default async function DashboardPage() {
                 ? `Groq · ${provider.model}`
                 : "Local planner (no API key)"}
             </span>
+            {guest.email ? (
+              <form action={signOutAction}>
+                <button type="submit" className="btn btn-secondary btn-sm">
+                  Sign out
+                </button>
+              </form>
+            ) : (
+              <Link href="/sign-in" className="btn btn-secondary btn-sm">
+                Save this browser
+              </Link>
+            )}
             <div className="flex items-center gap-2 rounded-full border border-[#1c1f25] bg-[#0d0f13] py-1 pl-1 pr-2.5">
               <span
                 aria-hidden
@@ -64,8 +76,9 @@ export default async function DashboardPage() {
               validated, previewed and versioned — and only applies to your own interface.
             </p>
             <p className="mt-2 max-w-lg text-[12px] leading-relaxed text-[#6b6f7a]">
-              No account needed: this browser holds a private guest identity. Workspace data is
-              shared with everyone here; the interface is yours alone.
+              {guest.email
+                ? `Signed in as ${guest.email}. Your interface and role follow this account on any device. Workspace data is shared with everyone here.`
+                : "No account needed: this browser holds a private guest identity. Create an account to carry your interface and role to other devices."}
             </p>
 
             <div className="mt-7 flex items-center justify-between">
