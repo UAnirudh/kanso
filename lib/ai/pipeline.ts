@@ -10,6 +10,7 @@ import {
   setAiRequestStatus,
 } from "../repo/ai";
 import { badRequest, HttpError, notFound, tooManyRequests } from "../errors";
+import { assertDailyTokenBudget } from "./budget";
 import { buildRepairPrompt, buildSystemPrompt, buildUserPrompt } from "./prompt";
 import { AiProviderError, completeChat, providerInfo } from "./provider";
 import { LocalPlannerError, planLocally } from "./local-planner";
@@ -100,8 +101,15 @@ export async function proposeInterfaceChange(input: {
     throw tooManyRequests("You have made a lot of interface edits in the last minute. Wait a few seconds.");
   }
 
-  const { document, pages, pageKeys } = loadInterface(input.access, input.userId);
   const info = providerInfo();
+  // The per-minute window above is keyed by user, and identity is a cookie: a new
+  // cookie is a new budget. This ceiling is global, so it is the only thing that caps
+  // what one visitor can spend on the owner's provider account. It runs before the
+  // document is loaded, so a refused request costs nothing and changes nothing.
+  // The local planner is free, so a key-less deployment is never blocked by it.
+  if (info.kind === "model") assertDailyTokenBudget();
+
+  const { document, pages, pageKeys } = loadInterface(input.access, input.userId);
   const started = Date.now();
 
   let tokensIn = 0;

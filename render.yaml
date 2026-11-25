@@ -24,6 +24,10 @@ services:
         value: qwen/qwen3-32b
       - key: AI_RATE_LIMIT_PER_MINUTE
         value: "8"
+      # A public URL plus a funded key is an open wallet. This is the only global
+      # ceiling on spend; raise it deliberately.
+      - key: AI_DAILY_TOKEN_CAP
+        value: "200000"
     disk:
       name: kanso-data
       mountPath: /var/data
