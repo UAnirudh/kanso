@@ -852,7 +852,7 @@ export function WorkspaceClient(props: WorkspaceProps) {
             type="button"
             onClick={() => setToast(null)}
             aria-label="Dismiss"
-            className="ml-1 text-[#6b6f7a] hover:text-[#e8e9ee]"
+            className="tap-target ml-1 text-[#6b6f7a] hover:text-[#e8e9ee]"
           >
             <X size={12} aria-hidden />
           </button>

@@ -373,7 +373,7 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
         <div className="flex items-center gap-0.5">
           <button
             type="button"
-            className="s-btn s-btn-ghost h-6 w-6 px-0"
+            className="s-btn s-btn-ghost tap-target h-6 w-6 px-0"
             onClick={() => updateOffset(offset - 1)}
             aria-label="Previous month"
           >
@@ -389,7 +389,7 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
           </button>
           <button
             type="button"
-            className="s-btn s-btn-ghost h-6 w-6 px-0"
+            className="s-btn s-btn-ghost tap-target h-6 w-6 px-0"
             onClick={() => updateOffset(offset + 1)}
             aria-label="Next month"
           >

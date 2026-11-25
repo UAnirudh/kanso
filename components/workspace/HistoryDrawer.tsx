@@ -74,7 +74,7 @@ export function HistoryDrawer({
             <History size={13} className="text-[#82858f]" aria-hidden />
             <h2 className="text-[12.5px] font-semibold text-[#e8e9ee]">Version history</h2>
           </div>
-          <button type="button" className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Close">
+          <button type="button" className="btn btn-ghost btn-icon tap-target" onClick={onClose} aria-label="Close">
             <X size={14} aria-hidden />
           </button>
         </header>

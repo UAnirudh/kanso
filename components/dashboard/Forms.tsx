@@ -167,14 +167,14 @@ export function AppCardActions({
           />
           <button
             type="submit"
-            className="btn btn-ghost btn-icon shrink-0"
+            className="btn btn-ghost btn-icon tap-target shrink-0"
             aria-label="Save name"
           >
             <Check size={13} aria-hidden />
           </button>
           <button
             type="button"
-            className="btn btn-ghost btn-icon shrink-0"
+            className="btn btn-ghost btn-icon tap-target shrink-0"
             aria-label="Cancel rename"
             onClick={() => setRenaming(false)}
           >

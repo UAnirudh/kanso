@@ -157,6 +157,20 @@ body {
     padding: 0;
     border-radius: var(--radius-sm);
   }
+  /* Icon controls stay visually small; touch input gets a 44px target around
+     them so a thumb can land without aiming. */
+  .tap-target {
+    position: relative;
+  }
+  .tap-target::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
 
   .field {
     width: 100%;
