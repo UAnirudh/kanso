@@ -256,7 +256,7 @@ export function NotesPanelView({ node }: { node: InterfaceNode }) {
                     className={`-mr-1 -mt-0.5 shrink-0 rounded-[4px] px-1 py-0.5 text-[9.5px] transition-colors disabled:opacity-40 ${
                       confirming === note.id
                         ? "bg-red-500/15 font-medium text-red-400"
-                        : "text-[var(--s-faint)] hover:bg-red-500/10 hover:text-red-400"
+                        : "text-[var(--s-muted)] hover:bg-red-500/10 hover:text-red-400"
                     }`}
                   >
                     {confirming === note.id ? "Delete?" : <Trash2 size={11} aria-hidden />}
