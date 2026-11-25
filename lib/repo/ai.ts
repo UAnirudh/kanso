@@ -182,6 +182,75 @@ export function aiTokensUsedToday(now = new Date()): number {
   return Number(row?.total ?? 0);
 }
 
+export interface AiUsageMetrics {
+  total: number;
+  proposed: number;
+  applied: number;
+  discarded: number;
+  failed: number;
+  tokensIn: number;
+  tokensOut: number;
+  /** Ascending, so a percentile is an index rather than a sort in the caller. */
+  latencies: number[];
+}
+
+/**
+ * AI usage for the apps this user can see, over a time window.
+ *
+ * The join through `workspace_members` is the scope: a guest sees the shared
+ * workspace they belong to plus any private workspace they own, never another
+ * workspace's prompts or spend. Percentiles are computed by the caller; SQLite has
+ * no built-in aggregate for them.
+ */
+export function aiUsageMetrics(userId: string, sinceIso: string): AiUsageMetrics {
+  const db = getDb();
+  const rows = db
+    .prepare(
+      `SELECT ai.status AS status,
+              COUNT(*) AS count,
+              COALESCE(SUM(COALESCE(ai.tokens_in, 0)), 0) AS tokens_in,
+              COALESCE(SUM(COALESCE(ai.tokens_out, 0)), 0) AS tokens_out
+         FROM ai_requests ai
+         JOIN apps a ON a.id = ai.app_id
+         JOIN workspace_members m ON m.workspace_id = a.workspace_id AND m.user_id = ?
+        WHERE ai.created_at >= ?
+        GROUP BY ai.status`,
+    )
+    .all(userId, sinceIso) as Array<{
+    status: AiStatus;
+    count: number;
+    tokens_in: number;
+    tokens_out: number;
+  }>;
+
+  const latencies = (
+    db
+      .prepare(
+        `SELECT ai.latency_ms AS latency
+           FROM ai_requests ai
+           JOIN apps a ON a.id = ai.app_id
+           JOIN workspace_members m ON m.workspace_id = a.workspace_id AND m.user_id = ?
+          WHERE ai.created_at >= ? AND ai.latency_ms IS NOT NULL
+          ORDER BY ai.latency_ms ASC`,
+      )
+      .all(userId, sinceIso) as Array<{ latency: number }>
+  ).map((row) => row.latency);
+
+  const byStatus = (status: AiStatus) =>
+    rows.find((row) => row.status === status)?.count ?? 0;
+
+  return {
+    total: rows.reduce((sum, row) => sum + row.count, 0),
+    proposed: byStatus("proposed"),
+    applied: byStatus("applied"),
+    discarded: byStatus("discarded"),
+    failed: byStatus("failed"),
+    tokensIn: rows.reduce((sum, row) => sum + row.tokens_in, 0),
+    tokensOut: rows.reduce((sum, row) => sum + row.tokens_out, 0),
+    latencies,
+  };
+}
+
 /**
  * Sliding-window budget so one browser cannot exhaust the shared model quota.
  * Backed by SQLite; a production deployment would use Redis for the same call.

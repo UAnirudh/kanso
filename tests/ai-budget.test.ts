@@ -91,6 +91,22 @@ describe("global daily AI token cap", () => {
     expect(status).toBe(503);
   });
 
+  it("reads the day's spend through the created_at index", () => {
+    // Without this index the cap would scan the whole audit table on every
+    // proposal; the query plan is the only thing that proves the migration works.
+    const plan = db
+      .getDb()
+      .prepare(
+        `EXPLAIN QUERY PLAN
+         SELECT COALESCE(SUM(COALESCE(tokens_in, 0) + COALESCE(tokens_out, 0)), 0) AS total
+           FROM ai_requests
+          WHERE created_at >= ?`,
+      )
+      .all(new Date().toISOString()) as Array<{ detail: string }>;
+
+    expect(plan.map((step) => step.detail).join(" ")).toContain("idx_ai_requests_created_at");
+  });
+
   it("is off when the variable is unset, zero or not a number", () => {
     expect(budget.dailyTokenCap()).toBeNull();
     for (const value of ["", "0", "-5", "lots"]) {
