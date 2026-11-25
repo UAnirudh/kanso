@@ -122,10 +122,15 @@ and the JSON route needs the device cookie like every other API route and answer
 
 - `spend` is **global** — today's tokens against `AI_DAILY_TOKEN_CAP`, the budget that can start
   refusing requests — because the cap is not per workspace.
-- `proposals`, `latencyMs` and `tokens` cover the last 30 days across the workspaces this browser
-  belongs to: acceptance rate (applied ÷ generated, PRD §8), p50/p95 latency, and tokens per
-  proposal and per applied change. The local planner records zero tokens, so a key-less run
-  shows real acceptance and latency with zero spend.
+- `proposals` covers the last 30 days across the workspaces this browser belongs to. Acceptance
+  is PRD §8's **applied without retry ÷ decided**: a preview still waiting for a decision is not
+  a rejection, so pending stays out of the denominator, and an applied proposal followed by
+  another request from the same browser for the same app within 10 minutes counts as a retry
+  rather than an acceptance.
+- `latencyMs`, `timeToFirstPersonalizationMs` and `tokens` use the same window and scope: p50/p95
+  request latency, the median from a browser's first open (its `init` revision) to its first
+  applied assistant change, and tokens per proposal and per applied change. The local planner
+  records zero tokens, so a key-less run shows real acceptance and latency with zero spend.
 
 ## Testing
 

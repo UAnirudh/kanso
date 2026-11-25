@@ -68,3 +68,4 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-25 | [Global daily AI token cap](2026-11-25-ai-spend-cap.md) | T-008 |
 | 2026-11-25 | [Metrics endpoint and the created_at index](2026-11-25-ai-metrics.md) | T-014 |
 | 2026-11-25 | [A read-only metrics page](2026-11-25-metrics-page.md) | T-017 |
+| 2026-11-25 | [PRD acceptance semantics and time to first personalization](2026-11-25-metrics-semantics.md) | T-018 |
