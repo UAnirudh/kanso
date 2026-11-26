@@ -77,7 +77,7 @@ describe("diffInterfaces", () => {
             type: "TaskList",
             title: "Tasks",
             layout: { column: 1, span: 6 },
-            props: { limit: 10, showCompleted: true },
+            props: { limit: 10, showCompleted: true, sort: "due" },
           }),
           node({
             id: "cmp_calendar",
@@ -98,7 +98,7 @@ describe("diffInterfaces", () => {
             title: "My tasks",
             visible: false,
             layout: { column: 7, span: 6 },
-            props: { limit: 12, showCompleted: false },
+            props: { limit: 12, showCompleted: false, sort: "priority" },
           }),
           node({
             id: "cmp_chart",
@@ -115,7 +115,10 @@ describe("diffInterfaces", () => {
     expect(entries).toContain("Renamed “Tasks” to “My tasks” on Overview");
     expect(entries).toContain("Hid “My tasks” on Overview");
     expect(entries).toContain("Moved “My tasks” to column 7 on Overview");
-    expect(entries).toContain("Changed limit and showCompleted on “My tasks”");
+    expect(entries).toContain(
+      "Changed “My tasks” settings: sorted by due → sorted by priority, completed hidden on Overview",
+    );
+    expect(entries.join(" ")).not.toContain("showCompleted");
     expect(entries).toContain("Added Progress chart “Progress” to Overview");
     expect(entries).toContain("Removed “Schedule” from Overview");
   });

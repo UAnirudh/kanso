@@ -201,11 +201,20 @@ export function diffInterfaces(
         );
       }
 
-      const props = changedProps(old.props, node.props);
-      if (props.length > 0) {
-        const setting =
-          props.length <= 2 ? props.join(" and ") : `${props.length} settings`;
-        add("component", "changed", key, `Changed ${setting} on “${name}”`);
+      if (changedProps(old.props, node.props).length > 0) {
+        // The catalog owns how a component's settings read; the diff shows those
+        // summaries rather than internal keys, so `sorted by due → sorted by priority`
+        // means something to the person reviewing the proposal.
+        const before = CATALOG[old.type].summarizeProps(old.props);
+        const after = CATALOG[node.type].summarizeProps(node.props);
+        add(
+          "component",
+          "changed",
+          key,
+          before === after
+            ? `Changed “${name}” settings on ${label}`
+            : `Changed “${name}” settings: ${before} → ${after} on ${label}`,
+        );
       }
     }
 
