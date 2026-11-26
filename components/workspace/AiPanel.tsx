@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle, ArrowUp, Check, Eye, Sparkles, Wand2, X } from "lucide-react";
+import { AlertTriangle, ArrowRight, ArrowUp, Check, Eye, Minus, Plus, Sparkles, Wand2, X } from "lucide-react";
 import { operationLabel } from "@/lib/interface/templates";
+import type { InterfaceDiffEntry } from "@/lib/interface/diff";
 import type { AiInfo, AiProposalView } from "./types";
 
 const SUGGESTIONS = [
@@ -13,9 +14,26 @@ const SUGGESTIONS = [
   "Replace the task table with a chart",
 ];
 
+const TONE_TEXT: Record<InterfaceDiffEntry["tone"], string> = {
+  added: "text-[#c8cad2]",
+  removed: "text-[#9a9da8]",
+  changed: "text-[#a9adb8]",
+};
+
+function ChangeIcon({ tone }: { tone: InterfaceDiffEntry["tone"] }) {
+  if (tone === "added") {
+    return <Plus size={11} className="mt-0.5 shrink-0 text-emerald-400/80" aria-hidden />;
+  }
+  if (tone === "removed") {
+    return <Minus size={11} className="mt-0.5 shrink-0 text-red-300/70" aria-hidden />;
+  }
+  return <ArrowRight size={11} className="mt-0.5 shrink-0 text-[#a496ff]/80" aria-hidden />;
+}
+
 export function AiPanel({
   ai,
   proposal,
+  changes,
   busy,
   statusText,
   error,
@@ -28,6 +46,7 @@ export function AiPanel({
 }: {
   ai: AiInfo;
   proposal: AiProposalView | null;
+  changes: InterfaceDiffEntry[];
   busy: boolean;
   statusText: string;
   error: { message: string; details?: string[] } | null;
@@ -176,17 +195,41 @@ export function AiPanel({
               </p>
               <p className="mt-1 text-[11.5px] leading-relaxed text-[#82858f]">{proposal.message}</p>
 
-              <ul className="mt-2.5 space-y-1 border-t border-[#1c1f25] pt-2.5">
-                {proposal.operations.map((operation, index) => (
-                  <li
-                    key={`${operation.op}-${index}`}
-                    className="flex items-start gap-1.5 text-[11px] text-[#9a9da8]"
-                  >
-                    <Check size={11} className="mt-0.5 shrink-0 text-emerald-400/70" aria-hidden />
-                    {operationLabel(operation)}
-                  </li>
-                ))}
-              </ul>
+              {changes.length > 0 ? (
+                <div className="mt-2.5 border-t border-[#1c1f25] pt-2.5">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+                    What changes
+                  </p>
+                  <ul aria-label="Interface changes" className="mt-1.5 space-y-1">
+                    {changes.slice(0, 8).map((change) => (
+                      <li
+                        key={change.id}
+                        className="flex items-start gap-1.5 text-[11px] leading-snug"
+                      >
+                        <ChangeIcon tone={change.tone} />
+                        <span className={TONE_TEXT[change.tone]}>{change.text}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {changes.length > 8 && (
+                    <p className="mt-1.5 text-[10px] text-[#4f525b]">
+                      and {changes.length - 8} more change{changes.length - 8 === 1 ? "" : "s"}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <ul className="mt-2.5 space-y-1 border-t border-[#1c1f25] pt-2.5">
+                  {proposal.operations.map((operation, index) => (
+                    <li
+                      key={`${operation.op}-${index}`}
+                      className="flex items-start gap-1.5 text-[11px] text-[#9a9da8]"
+                    >
+                      <Check size={11} className="mt-0.5 shrink-0 text-emerald-400/70" aria-hidden />
+                      {operationLabel(operation)}
+                    </li>
+                  ))}
+                </ul>
+              )}
 
               {proposal.warnings.length > 0 && (
                 <ul className="mt-2 space-y-1 border-t border-[#1c1f25] pt-2">
