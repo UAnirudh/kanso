@@ -122,6 +122,29 @@ export function restoreInterfaceVersion(input: {
   });
 }
 
+/**
+ * Returns the caller's interface to the layout the application was generated
+ * with, recorded as a normal revision so the reset itself can be undone or the
+ * previous arrangement restored from history.
+ */
+export function resetInterfaceToBase(input: {
+  access: AppAccess;
+  userId: string;
+}): SaveResult {
+  const pages = getPages(input.access.app.id);
+  const base = readBaseDocument(input.access.app.id, pages);
+  const { document } = normalizeDocument(cloneDocument(base), {
+    pageKeys: pages.map((page) => page.key),
+  });
+  return saveInterface({
+    access: input.access,
+    userId: input.userId,
+    document,
+    kind: "restore",
+    label: "Reset to the generated layout",
+  });
+}
+
 export function undoInterfaceChange(input: {
   access: AppAccess;
   userId: string;

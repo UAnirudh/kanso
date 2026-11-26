@@ -209,6 +209,77 @@ test("per-browser adaptive interface over one shared workspace", async ({ browse
   await mobile.close();
 });
 
+test("application and interface lifecycle controls", async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  const page = await context.newPage();
+  await openDashboard(page);
+
+  // Generate an app whose name we control, so the dashboard row is unambiguous.
+  await page.fill(
+    "#app-prompt",
+    "A personal daily tracker with a task list, calendar and progress chart",
+  );
+  await page.fill("#app-name", "Lifecycle test app");
+  await page.getByRole("button", { name: "Generate", exact: true }).click();
+  await expect(page).toHaveURL(/\/apps\/app_/, { timeout: 40_000 });
+
+  // Notes are removable, not just append-only.
+  await page.getByPlaceholder("Add a note…").fill("Temporary note");
+  await page.getByRole("button", { name: "Save note" }).click();
+  await expect(page.getByText("Temporary note").first()).toBeVisible();
+  await page.getByRole("button", { name: "Delete note Temporary note" }).click();
+  const confirmNote = page.getByRole("button", {
+    name: "Confirm deleting note Temporary note",
+  });
+  await expect(confirmNote).toBeEnabled();
+  // Confirming removes the row this control lives in, so a pointer click races the removal:
+  // Playwright sees the button detach, retries, and waits for a locator that is gone for good
+  // until the test times out (the delete itself already happened). The note control is a plain
+  // button rather than a form submit, so activate it in-page and then wait for the note to go.
+  await confirmNote.evaluate((button) => (button as HTMLButtonElement).click());
+  await expect(page.getByText("Temporary note")).toHaveCount(0);
+
+  // Reset returns the interface to the layout it was generated with.
+  await page.fill("#ai-prompt", "Switch to dark mode");
+  await page.press("#ai-prompt", "Enter");
+  await expect(page.getByText("Proposed change")).toBeVisible({ timeout: 40_000 });
+  await page.getByRole("button", { name: "Apply change" }).click();
+  await expect(page.locator(".surface")).toHaveAttribute("data-theme", "dark");
+
+  await page.getByRole("button", { name: /versions?$/ }).first().click();
+  await page.getByRole("button", { name: "Reset to the generated layout" }).click();
+  await page.getByRole("button", { name: "Confirm reset" }).click();
+  await expect(page.locator(".surface")).toHaveAttribute("data-theme", "light");
+
+  // Applications can be renamed from the dashboard.
+  await page.goto("/dashboard");
+  const card = page.locator("li", { hasText: "Lifecycle test app" }).first();
+  await card.getByRole("button", { name: "Rename" }).click();
+  await card.locator('input[name="name"]').fill("Renamed lifecycle app");
+  await card.getByRole("button", { name: "Save name" }).click();
+  await expect(page.getByRole("link", { name: /Renamed lifecycle app/ })).toBeVisible();
+
+  // And deleted, behind a two-step confirmation. The first click only arms the button,
+  // so wait for the confirm state before submitting it.
+  const renamed = page.locator("li", { hasText: "Renamed lifecycle app" }).first();
+  await renamed.getByRole("button", { name: "Delete Renamed lifecycle app" }).click();
+  const confirmDelete = renamed.getByRole("button", {
+    name: "Confirm deleting Renamed lifecycle app",
+  });
+  await expect(confirmDelete).toBeEnabled();
+  // Confirming deletes the row this button lives in, so a pointer click races the removal:
+  // Playwright sees the button detach, retries, and waits for a locator that is gone for good
+  // until the test times out (the delete itself already happened). Submit the form the button
+  // belongs to instead, then wait for the row to disappear.
+  await confirmDelete.evaluate((button) => {
+    const form = button.closest("form") as HTMLFormElement;
+    form.requestSubmit(button as HTMLButtonElement);
+  });
+  await expect(page.getByRole("link", { name: /Renamed lifecycle app/ })).toHaveCount(0);
+
+  await context.close();
+});
+
 test("identity, health and role boundaries are enforced server-side", async ({ browser }) => {
   const context = await browser.newContext();
   const page = await context.newPage();

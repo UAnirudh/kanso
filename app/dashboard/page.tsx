@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ArrowUpRight, ChartColumn, LayoutGrid, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
+import { AppCardActions, NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
 import { providerInfo } from "@/lib/ai/provider";
+import { signOutAction } from "@/app/actions";
 import { requireGuest } from "@/lib/identity";
 import { initials } from "@/lib/format";
 import { listAppsForUser } from "@/lib/repo/apps";
@@ -39,6 +40,17 @@ export default async function DashboardPage() {
                 ? `Groq · ${provider.model}`
                 : "Local planner (no API key)"}
             </span>
+            {guest.email ? (
+              <form action={signOutAction}>
+                <button type="submit" className="btn btn-secondary btn-sm">
+                  Sign out
+                </button>
+              </form>
+            ) : (
+              <Link href="/sign-in" className="btn btn-secondary btn-sm">
+                Save this browser
+              </Link>
+            )}
             <div className="flex items-center gap-2 rounded-full border border-[#1c1f25] bg-[#0d0f13] py-1 pl-1 pr-2.5">
               <span
                 aria-hidden
@@ -71,8 +83,9 @@ export default async function DashboardPage() {
               validated, previewed and versioned — and only applies to your own interface.
             </p>
             <p className="mt-2 max-w-lg text-[12px] leading-relaxed text-[#6b6f7a]">
-              No account needed: this browser holds a private guest identity. Workspace data is
-              shared with everyone here; the interface is yours alone.
+              {guest.email
+                ? `Signed in as ${guest.email}. Your interface and role follow this account on any device. Workspace data is shared with everyone here.`
+                : "No account needed: this browser holds a private guest identity. Create an account to carry your interface and role to other devices."}
             </p>
 
             <div className="mt-7 flex items-center justify-between">
@@ -98,10 +111,13 @@ export default async function DashboardPage() {
             ) : (
               <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
                 {apps.map((app) => (
-                  <li key={app.id}>
+                  <li
+                    key={app.id}
+                    className="flex h-full flex-col justify-between overflow-hidden rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] transition-colors hover:border-[#353a45]"
+                  >
                     <Link
                       href={`/apps/${app.id}`}
-                      className="group flex h-full flex-col justify-between rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4 transition-colors hover:border-[#353a45] hover:bg-[#0d0f13]"
+                      className="group flex flex-1 flex-col justify-between p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
@@ -124,6 +140,11 @@ export default async function DashboardPage() {
                         <span>{app.openCount} open</span>
                       </div>
                     </Link>
+                    <AppCardActions
+                      appId={app.id}
+                      appName={app.name}
+                      canManage={app.role === "admin" || app.role === "owner"}
+                    />
                   </li>
                 ))}
               </ul>

@@ -271,7 +271,7 @@ function ToolbarButton({
       disabled={disabled}
       title={label}
       aria-label={label}
-      className={`grid h-5 w-5 shrink-0 place-items-center rounded-[4px] transition-colors disabled:opacity-30 ${
+      className={`tap-target grid h-7 w-7 shrink-0 place-items-center rounded-[4px] transition-colors disabled:opacity-30 ${
         danger
           ? "text-[#82858f] hover:bg-red-500/15 hover:text-red-300"
           : "text-[#82858f] hover:bg-[#1b1e24] hover:text-[#e8e9ee]"

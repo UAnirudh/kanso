@@ -73,7 +73,7 @@ export function AiPanel({
         <button
           type="button"
           onClick={onClose}
-          className="btn btn-ghost btn-icon"
+          className="btn btn-ghost btn-icon tap-target"
           aria-label="Close assistant"
         >
           <X size={14} aria-hidden />
@@ -263,7 +263,7 @@ export function AiPanel({
               type="button"
               onClick={submit}
               disabled={busy || draft.trim().length < 3}
-              className="grid h-6 w-6 place-items-center rounded-[5px] bg-[#8b7cf8] text-[#0a0a0c] transition-opacity disabled:opacity-30"
+              className="tap-target grid h-6 w-6 place-items-center rounded-[5px] bg-[#8b7cf8] text-[#0a0a0c] transition-opacity disabled:opacity-30"
               aria-label="Send request"
             >
               <ArrowUp size={13} aria-hidden />

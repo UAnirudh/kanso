@@ -109,7 +109,7 @@ export function Modal({
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className={`grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors ${
+            className={`tap-target grid h-7 w-7 shrink-0 place-items-center rounded-md transition-colors ${
               surface
                 ? "text-[var(--s-muted)] hover:bg-[var(--s-panel-alt)]"
                 : "text-[#82858f] hover:bg-[#181b21] hover:text-[#e8e9ee]"

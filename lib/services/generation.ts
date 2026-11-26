@@ -1,6 +1,6 @@
 import { getDb, newId, nowIso } from "../db";
-import { forbidden, notFound } from "../errors";
-import { insertApp, type App } from "../repo/apps";
+import { badRequest, forbidden, notFound } from "../errors";
+import { insertApp, requireAppAccess, updateApp, type App, type AppAccess } from "../repo/apps";
 import { getMembership, type Role } from "../repo/workspaces";
 import { buildDocumentFromTemplate, selectTemplate } from "../interface/templates";
 import { writeBaseDefinition, createUserInterface } from "../interface/store";
@@ -185,8 +185,39 @@ export function generateApplication(input: {
   return { app, document, seededTasks: seeds.length };
 }
 
-export function deleteApplication(appId: string): void {
-  getDb().prepare("DELETE FROM apps WHERE id = ?").run(appId);
+/**
+ * Renaming and deleting an application changes the workspace everyone shares, so
+ * the check lives here rather than in the route or server action that calls it:
+ * every entry point gets the same answer, and a new caller cannot forget it.
+ */
+function requireManageableApp(
+  appId: string,
+  userId: string,
+  action: "rename" | "delete",
+): AppAccess {
+  const access = requireAppAccess(appId, userId);
+  if (!access.canManage) {
+    throw forbidden(`Only workspace admins can ${action} applications.`);
+  }
+  return access;
+}
+
+export function renameApplication(input: {
+  appId: string;
+  userId: string;
+  name: string;
+  description?: string;
+}): App {
+  const access = requireManageableApp(input.appId, input.userId, "rename");
+  const name = input.name.trim();
+  if (name.length < 2) throw badRequest("Give the application a name.");
+  if (name.length > 60) throw badRequest("Keep the name under 60 characters.");
+  return updateApp(access.app.id, { name, description: input.description });
+}
+
+export function deleteApplication(input: { appId: string; userId: string }): void {
+  const access = requireManageableApp(input.appId, input.userId, "delete");
+  getDb().prepare("DELETE FROM apps WHERE id = ?").run(access.app.id);
 }
 
 export type { AppRecord };

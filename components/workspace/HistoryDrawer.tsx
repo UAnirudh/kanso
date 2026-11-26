@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect } from "react";
-import { History, RotateCcw, Undo2, X } from "lucide-react";
+import { useEffect, useState } from "react";
+import { History, RotateCcw, Sparkles, Undo2, X } from "lucide-react";
 import { relativeTime } from "@/lib/format";
 import type { RevisionView } from "./types";
 
@@ -28,6 +28,7 @@ export function HistoryDrawer({
   onClose,
   onRestore,
   onUndo,
+  onReset,
 }: {
   open: boolean;
   history: RevisionView[];
@@ -35,7 +36,14 @@ export function HistoryDrawer({
   onClose: () => void;
   onRestore: (revisionId: string) => void;
   onUndo: () => void;
+  onReset: () => void;
 }) {
+  const [confirmReset, setConfirmReset] = useState(false);
+
+  useEffect(() => {
+    if (!open) setConfirmReset(false);
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (event: KeyboardEvent) => {
@@ -66,7 +74,7 @@ export function HistoryDrawer({
             <History size={13} className="text-[#82858f]" aria-hidden />
             <h2 className="text-[12.5px] font-semibold text-[#e8e9ee]">Version history</h2>
           </div>
-          <button type="button" className="btn btn-ghost btn-icon" onClick={onClose} aria-label="Close">
+          <button type="button" className="btn btn-ghost btn-icon tap-target" onClick={onClose} aria-label="Close">
             <X size={14} aria-hidden />
           </button>
         </header>
@@ -81,9 +89,25 @@ export function HistoryDrawer({
             <Undo2 size={13} aria-hidden />
             Undo last change
           </button>
+          <button
+            type="button"
+            className={`btn mt-2 w-full ${confirmReset ? "btn-danger" : "btn-ghost"}`}
+            onClick={() => {
+              if (!confirmReset) {
+                setConfirmReset(true);
+                return;
+              }
+              setConfirmReset(false);
+              onReset();
+            }}
+            disabled={busy}
+          >
+            <Sparkles size={13} aria-hidden />
+            {confirmReset ? "Confirm reset" : "Reset to the generated layout"}
+          </button>
           <p className="mt-2 text-[10.5px] leading-relaxed text-[#5f626b]">
             Only your interface is versioned. Teammates&apos; layouts are never touched by your
-            changes or restores.
+            changes or restores. A reset is saved as a version too, so you can undo it.
           </p>
         </div>
 
@@ -119,7 +143,7 @@ export function HistoryDrawer({
                 {index !== 0 && (
                   <button
                     type="button"
-                    className="btn btn-ghost btn-sm shrink-0"
+                    className="btn btn-ghost btn-sm tap-target shrink-0"
                     onClick={() => onRestore(revision.id)}
                     disabled={busy}
                     aria-label={`Restore version: ${revision.label}`}
