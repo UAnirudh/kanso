@@ -30,8 +30,8 @@ actually implemented in this repository — not an aspirational target.
 │                                                                                                   │
 │ Domain modules                                                                                    │
 │  interface/{types,catalog,operations,engine,store,service,templates,controls}                      │
-│  ai/{provider,prompt,local-planner,pipeline}      repo/{users,workspaces,apps,records,ai}          │
-│  services/generation      auth      api (error envelope)      db (sqlite + migrations)            │
+│  ai/{provider,prompt,local-planner,pipeline}      repo/{guests,accounts,workspaces,apps,records,ai,rate-limit} │
+│  services/generation   identity/sessions   api (error envelope)   db (sqlite + migrations)       │
 └──────────────────────────────────────────────┬────────────────────────────────────────────────────┘
                                                │ SQL (better-sqlite3, WAL)
                                                ▼
@@ -113,9 +113,15 @@ superseded (`users.email`, `users.password_hash`, the `sessions` table). Because
 off and runs `PRAGMA foreign_key_check` before recording each file, so such a rebuild cannot cascade
 data away or commit a broken reference.
 
+`0004` restores accounts **additively**: it adds `users.email`, `users.password_hash`, a partial
+unique index on email and the `sessions` table, and rebuilds nothing. Credentials on the existing row
+are enough to make a guest an account (ADR-11), so existing guest rows keep their ids and every
+reference to them stays valid.
+
 | Table | Purpose | Key constraints |
 | --- | --- | --- |
-| `users` | Guest device identities, plus one system row that owns the shared workspace | unique `device_id`, `is_system` flag |
+| `users` | Guest device identities and account credentials, plus one system row that owns the shared workspace | unique `device_id`, unique `email` (partial), `is_system` flag |
+| `sessions` | Live sign-ins, one row per issued cookie token | PK is the SHA-256 of the token, `user_id` FK, `expires_at` index |
 | `workspaces` | Tenancy container | owner FK |
 | `workspace_members` | Membership + role | PK `(workspace_id, user_id)`, role check |
 | `apps` | Applications | FK workspace, `ON DELETE CASCADE` |
@@ -125,7 +131,7 @@ data away or commit a broken reference.
 | `user_interfaces` | One personal document per user per app | unique `(app_id, user_id)` |
 | `interface_revisions` | Append-only history per user | index `(user_interface_id, created_at)` |
 | `ai_requests` | Every proposal/failure audit row | status check, FK app/user, tokens/latency |
-| `rate_limit_events` | Sliding-window AI budget | index `(bucket, created_at)` |
+| `rate_limit_events` | Sliding-window budgets (AI edits, credential attempts) | index `(bucket, created_at)` |
 | `schema_migrations` | Applied migration names | PK name |
 
 `interface_definitions` is what a new member forks from. Deleting an app cascades its pages,
@@ -135,6 +141,12 @@ records, interfaces, revisions and AI history.
 
 Resolution path for every app request: `requireAppAccess(appId, userId)` → app → workspace →
 membership row → role. There is no client-supplied user or role anywhere.
+
+Before that, `getViewer()` resolves who is calling: a `kanso_session` cookie is checked against
+`sessions` first, and only when it is missing or expired does the `kanso_device` cookie resolve a
+guest row. Both paths return a real `users.id`, so no authorization check below changed. Signing up
+writes credentials onto the guest row the browser already had and clears its `device_id`, which is why
+claiming preserves memberships and interface documents without a copy or merge step.
 
 | Capability | owner | admin | member | viewer |
 | --- | --- | --- | --- | --- |
@@ -229,8 +241,16 @@ another provider is a new `completeChat` implementation, not a pipeline rewrite.
 
 ## 8. Security summary
 
-- Identity: an opaque 128-bit device id in an httpOnly + SameSite=Lax cookie (Secure in
-  production), 365-day expiry. It is an identity, not an authentication factor.
+- Identity: a guest is an opaque 128-bit device id in an httpOnly, SameSite=Lax cookie (Secure in
+  production, 365-day expiry); it is an identity, not an authentication factor. An account adds a
+  `kanso_session` cookie (httpOnly, SameSite=Lax, 30-day expiry) whose token is stored only as a
+  SHA-256 hash. The session is checked first; a browser with neither cookie is sent to `/api/device`.
+- Credentials: scrypt hashes with a per-password salt and a constant-time comparison; an unknown email
+  is compared against a dummy hash so timing cannot reveal whether an account exists. Credential
+  attempts are counted **before** verification in `rate_limit_events`: sign-in 5 per email and 20 per
+  network per 15 minutes; sign-up 3 per email per hour and 20 per network per 15 minutes. All four
+  buckets are separate, and the network key is a SHA-256 of `x-forwarded-for`/`x-real-ip` (falling
+  back to `unknown`), so no address is stored — but a deployment needs a proxy that sets one header.
 - Guest rows and their shared-workspace membership are created server-side only (`resolveGuest`);
   the browser never supplies a user id, and every authorization check still reads a real membership
   row.
@@ -240,7 +260,7 @@ another provider is a new `completeChat` implementation, not a pipeline rewrite.
 - Secrets: `GROQ_API_KEY` is read only in server modules; no `NEXT_PUBLIC_` AI variables; the
   browser never sees the key.
 - XSS: no `dangerouslySetInnerHTML`; model output is data, never markup or code.
-- Browser hardening (ADR-11): one `headers()` rule in `next.config.mjs` sets CSP
+- Browser hardening (ADR-12): one `headers()` rule in `next.config.mjs` sets CSP
   (`default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`, `base-uri 'self'`,
   `form-action 'self'`), `X-Frame-Options: DENY`, `nosniff`,
   `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` denying
@@ -294,8 +314,9 @@ return the authoritative document and `router.refresh()` reconciles server compo
 Three chart shapes are needed, each with a hand-written accessible table fallback. A charting
 dependency would add significant bundle weight for less control over accessibility and theming.
 
-**ADR-9 — Anonymous device identity instead of accounts, for now.**
-Sign-in was removed deliberately, to ship a usable shared workspace without an auth provider.
+**ADR-9 — Anonymous device identity as the default.**
+Sign-in was removed deliberately at that point, to ship a usable shared workspace without an auth
+provider; accounts were later restored on top of the same identity (ADR-11), not instead of it.
 `GET /api/device` mints a 128-bit id in an httpOnly, SameSite=Lax cookie (Secure in production);
 the first request that uses it creates a guest `users` row and joins — or creates — the single
 workspace marked `workspaces.is_shared`. Every authorization check still runs against a real
@@ -314,7 +335,18 @@ writes and on member changes), and private workspaces still have a real owner. T
 alternatives were inferring ownership from request order or from a "last seen" timestamp, both of
 which guess at something the cookie cannot prove.
 
-**ADR-11 — Security headers with an inline-script CSP, no nonce middleware yet.**
+**ADR-11 — Accounts claim the guest row instead of creating a parallel person.**
+Restoring sign-in could have meant a new `accounts` table with guest rows migrated into it, or a
+separate person row with a merge step. Both rewrite references (`workspace_members`,
+`user_interfaces`, `interface_revisions`, `ai_requests`, `app_records.created_by`) and both create a
+window where two rows mean the same person. Instead, credentials live on `users` and sign-up updates
+the row the browser already has, clearing `device_id`; signing in resolves that same row through a
+session. Nothing is copied, nothing is merged, and a row that never signs up is still a valid guest.
+The accepted trade-off is that a claimed row is no longer addressable by device id, so signing out
+starts a fresh guest rather than returning to the pre-account identity — correct, because the account
+is now the durable identity.
+
+**ADR-12 — Security headers with an inline-script CSP, no nonce middleware yet.**
 Every route ships CSP and the standard hardening headers from `next.config.mjs`. A nonce-based
 CSP is stricter, but the App Router hydrates through inline bootstrap scripts, so a nonce has to
 be generated per request in middleware and threaded through every response — a dynamic hop in
@@ -327,6 +359,13 @@ for this build. Revisit when a third-party script is added or a stronger CSP is 
 change is middleware plus Next's nonce support, not a rewrite.
 
 ## 10. Request flows (concrete)
+
+**Sign up / sign in** → the `/sign-in` form actions check both credential budgets (email and network)
+→ `claimAccount` writes credentials onto the current guest row and clears `device_id`, or
+`authenticate` finds the row by email → a session token is minted, stored as a hash and set as
+`kanso_session` → redirect to `/dashboard`, where `getViewer()` resolves the account. Sign-out revokes
+the session, expires the cookie and revalidates the layout, so the next render is a guest rather than
+a cached account view.
 
 **Open an app** → `requireGuest` → `requireAppAccess` (403/404 boundary) → `loadInterface`
 (fork from base definition on first visit, record `init` revision) → load tasks/notes/activity/

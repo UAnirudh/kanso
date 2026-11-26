@@ -199,7 +199,7 @@ export function TaskDialog({
             {editing && state?.task && canEdit && (
               <button
                 type="button"
-                className={`btn ${confirmDelete ? "btn-danger" : "btn-ghost"} btn-sm`}
+                className={`btn tap-target ${confirmDelete ? "btn-danger" : "btn-ghost"} btn-sm`}
                 onClick={async () => {
                   if (!confirmDelete) {
                     setConfirmDelete(true);
@@ -464,7 +464,7 @@ export function MembersDialog({
                 </label>
                 <select
                   id={`role-${member.userId}`}
-                  className="field h-[28px] w-[92px] text-[11.5px]"
+                  className="field role-select w-[92px] text-[11.5px]"
                   value={member.role}
                   disabled={busy}
                   onChange={async (event) => {

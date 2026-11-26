@@ -63,7 +63,7 @@ export function TopBar({
       <div className="flex min-w-0 items-center gap-1.5">
         <button
           type="button"
-          className="btn btn-ghost btn-icon lg:hidden"
+          className="btn btn-ghost btn-icon tap-target lg:hidden"
           onClick={onOpenSidebar}
           aria-label="Open navigation"
         >
@@ -93,7 +93,7 @@ export function TopBar({
         <div className="relative">
           <button
             type="button"
-            className="btn btn-ghost"
+            className="btn btn-ghost tap-target"
             onClick={() => setMenuOpen((value) => !value)}
             aria-expanded={menuOpen}
             aria-haspopup="true"
@@ -153,7 +153,7 @@ export function TopBar({
                           `${accent.label} accent`,
                         )
                       }
-                      className={`grid h-6 w-6 place-items-center rounded-full border transition-transform ${
+                      className={`tap-target grid h-6 w-6 place-items-center rounded-full border transition-transform ${
                         appearance.accent === accent.value
                           ? "scale-105 border-white/60"
                           : "border-transparent hover:scale-105"
@@ -231,7 +231,7 @@ export function TopBar({
           <button
             type="button"
             onClick={onNewTask}
-            className="btn btn-ghost hidden sm:flex"
+            className="btn btn-ghost tap-target hidden sm:flex"
             aria-label="New task"
           >
             <Plus size={14} aria-hidden />
@@ -243,7 +243,7 @@ export function TopBar({
           type="button"
           onClick={onToggleEdit}
           aria-pressed={editMode}
-          className={`btn ${editMode ? "btn-secondary border-[#8b7cf8]/50 text-[#c4baff]" : "btn-ghost"}`}
+          className={`btn tap-target ${editMode ? "btn-secondary border-[#8b7cf8]/50 text-[#c4baff]" : "btn-ghost"}`}
         >
           <PencilRuler size={14} aria-hidden />
           <span className="hidden md:inline">{editMode ? "Editing" : "Customize"}</span>
@@ -254,7 +254,7 @@ export function TopBar({
           onClick={onToggleAi}
           aria-pressed={aiOpen}
           aria-label="Toggle interface assistant"
-          className={`btn ${aiOpen ? "btn-secondary" : "btn-ghost"}`}
+          className={`btn tap-target ${aiOpen ? "btn-secondary" : "btn-ghost"}`}
         >
           <Sparkles size={14} aria-hidden />
           <span className="hidden md:inline">Assistant</span>

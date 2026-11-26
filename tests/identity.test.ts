@@ -91,7 +91,7 @@ describe("guest identity and the shared workspace", () => {
     );
   });
 
-  it("leaves no sign-in schema behind", () => {
+  it("adds account columns without invalidating existing guest rows", () => {
     const database = db.getDb();
     const columns = (database.prepare("PRAGMA table_info(users)").all() as Array<{
       name: string;
@@ -102,7 +102,17 @@ describe("guest identity and the shared workspace", () => {
       }>
     ).map((table) => table.name);
 
-    expect(columns).toEqual(["id", "name", "created_at", "device_id", "is_system"]);
-    expect(tables).not.toContain("sessions");
+    // Credentials are optional, so a browser that never signs up stays a guest
+    // row and everything that referenced it keeps working.
+    expect(columns).toEqual(
+      expect.arrayContaining(["id", "name", "created_at", "device_id", "is_system", "email", "password_hash"]),
+    );
+    expect(tables).toContain("sessions");
+
+    const guest = guests.resolveGuest("f".repeat(32));
+    const row = database
+      .prepare("SELECT email, password_hash AS passwordHash FROM users WHERE id = ?")
+      .get(guest.id);
+    expect(row).toEqual({ email: null, passwordHash: null });
   });
 });

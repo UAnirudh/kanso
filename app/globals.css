@@ -157,6 +157,27 @@ body {
     padding: 0;
     border-radius: var(--radius-sm);
   }
+  /* Icon controls stay visually small; touch input gets a 44px target around
+     them so a thumb can land without aiming. */
+  .tap-target,
+  .btn-sm {
+    position: relative;
+  }
+  .tap-target::after,
+  .btn-sm::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+  /* For a control at the bottom of a card: the target hangs below the button
+     instead of covering the content above it. */
+  .tap-target-below::after {
+    top: 100%;
+  }
 
   .field {
     width: 100%;
@@ -191,6 +212,19 @@ body {
     padding: 0.5rem 0.65rem;
     line-height: 1.5;
     resize: vertical;
+  }
+  /* A native select cannot carry a pseudo-element target, so on touch screens
+     the role picker grows to 44px; desktop dialogs keep the compact control. */
+  .role-select {
+    height: 28px;
+  }
+  @media (pointer: coarse) {
+    .role-select {
+      height: 44px;
+    }
+    select.role-select {
+      background-position: calc(100% - 15px) center, calc(100% - 10px) center;
+    }
   }
 
   .label {
@@ -650,7 +684,9 @@ select.s-input {
   padding: 4px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  /* Keeps stacked task chips 24px apart, so each chip can carry a 44px
+     touch target without covering the chip below it. */
+  gap: 6px;
   overflow: hidden;
   text-align: left;
   cursor: pointer;
@@ -668,16 +704,28 @@ select.s-input {
   color: var(--s-muted);
 }
 .cal-task {
+  display: flex;
+  align-items: center;
+  min-height: 18px;
   font-size: 9.5px;
   line-height: 1.25;
+  white-space: nowrap;
   padding: 1.5px 4px;
   border-radius: 3px;
   background: var(--s-accent-soft);
   color: var(--s-accent);
   font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+/* Stacked chips share one cell, so each target grows away from its neighbour:
+   the first upwards over the day number, the second downwards. */
+.cal-task.tap-target::after {
+  top: 0;
+  transform: translate(-50%, -22px);
+}
+.cal-task.tap-target:nth-of-type(2)::after {
+  top: auto;
+  bottom: 0;
+  transform: translate(-50%, 22px);
 }
 
 }
