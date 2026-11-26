@@ -151,8 +151,10 @@ docker/                     entrypoint (chown the mount, drop to `kanso`) + loca
 | Cross-cutting | full ladder: `typecheck` → `test` → `build` → `test:e2e` |
 
 `npm run typecheck` → `npm test` → `npm run build` (the `verify` job) and `npm run test:e2e`
-(the `e2e` job, after `npx playwright install --with-deps chromium`) both run in CI on every push and
-pull request (`.github/workflows/ci.yml`, Node 22, no `GROQ_API_KEY`). Green CI still does not
+(the `e2e` job, after `npx playwright install --with-deps chromium`) both run in CI on every pull
+request, and on every push to `main` (`.github/workflows/ci.yml`, Node 22, no `GROQ_API_KEY`).
+A push to a branch runs nothing by itself: `pull_request` is the branch gate, so the checks appear
+once the branch has a PR, and `main` gets one run after a merge. Green CI still does not
 cover the Docker, model-key and `npm audit` checks in this table. `main` is protected: both
 jobs are required status checks and admin bypass is disabled, so a red pull request cannot merge
 — and a direct push is refused until the checks have run. Every change lands as a pull request

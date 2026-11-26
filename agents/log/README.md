@@ -70,3 +70,4 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-25 | [A read-only metrics page](2026-11-25-metrics-page.md) | T-017 |
 | 2026-11-25 | [PRD acceptance semantics and time to first personalization](2026-11-25-metrics-semantics.md) | T-018 |
 | 2026-11-25 | [Security headers and their e2e assertions](2026-11-25-security-headers.md) | T-016 |
+| 2026-11-26 | [CI runs once per PR push: push trigger scoped to main](2026-11-26-ci-main-only-push.md) | T-007 |
