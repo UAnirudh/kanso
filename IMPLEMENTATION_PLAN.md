@@ -97,7 +97,9 @@ Status legend: `[x]` implemented and verified · `[~]` implemented, limited veri
       Cmd/Ctrl-free single-key flows, visible focus rings.
 - [x] Reduced-motion support; contrast checked in light and dark surface themes.
 - [ ] Browser-level visual regression snapshots in CI.
-- [ ] Automated accessibility audit (axe) in CI.
+- [x] Automated accessibility audit (axe) in CI: `e2e/accessibility.spec.ts` scans the
+      dashboard, the account page and a generated workspace for serious/critical WCAG A/AA
+      violations (2026-11-26). Browser-level visual-regression snapshots remain open.
 
 ## Next three highest-value improvements
 

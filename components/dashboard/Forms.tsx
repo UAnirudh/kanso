@@ -119,7 +119,7 @@ export function NewAppForm({
       )}
 
       <div className="mt-4 flex items-center justify-between gap-3">
-        <p className="text-[11px] leading-relaxed text-[#5f626b]">
+        <p className="text-[11px] leading-relaxed text-[#7f828d]">
           Generated from a constrained template: real tasks, pages and components — no mockups.
         </p>
         <Submit label="Generate" pendingLabel="Generating…" />

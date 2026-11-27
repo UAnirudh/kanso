@@ -35,7 +35,7 @@ function PageIcon({ name, active }: { name: string; active: boolean }) {
     <Icon
       size={14}
       aria-hidden
-      className={active ? "text-[#c4baff]" : "text-[#6b6f7a] group-hover:text-[#c8cad2]"}
+      className={active ? "text-[#c4baff]" : "text-[#8a8d98] group-hover:text-[#c8cad2]"}
     />
   );
 }
@@ -91,13 +91,13 @@ export function Sidebar({
       <div className="px-2 py-2.5">
         {!collapsed ? (
           <div className="rounded-[8px] border border-[#1c1f25] bg-[#0d0f13] px-2.5 py-2">
-            <p className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-[#4f525b]">
+            <p className="text-[9.5px] font-semibold uppercase tracking-[0.1em] text-[#8a8d98]">
               {workspaceName}
             </p>
             <p className="mt-0.5 truncate text-[12.5px] font-medium text-[#e8e9ee]" title={appName}>
               {appName}
             </p>
-            <p className="mt-0.5 text-[10px] text-[#6b6f7a]">{ROLE_LABEL[role]} access</p>
+            <p className="mt-0.5 text-[10px] text-[#8a8d98]">{ROLE_LABEL[role]} access</p>
           </div>
         ) : (
           <div
@@ -111,7 +111,7 @@ export function Sidebar({
 
       <nav className="min-h-0 flex-1 overflow-y-auto px-2" aria-label="Application pages">
         {!collapsed && (
-          <p className="px-2 pb-1 pt-1 text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#4f525b]">
+          <p className="px-2 pb-1 pt-1 text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#8a8d98]">
             Pages
           </p>
         )}
@@ -154,7 +154,7 @@ export function Sidebar({
                   collapsed ? "justify-center" : ""
                 }`}
               >
-                <Plus size={14} aria-hidden className="text-[#6b6f7a]" />
+                <Plus size={14} aria-hidden className="text-[#8a8d98]" />
                 {!collapsed && "New task"}
               </button>
             </li>
@@ -168,7 +168,7 @@ export function Sidebar({
                 collapsed ? "justify-center" : ""
               }`}
             >
-              <History size={14} aria-hidden className="text-[#6b6f7a]" />
+              <History size={14} aria-hidden className="text-[#8a8d98]" />
               {!collapsed && "Version history"}
             </button>
           </li>
@@ -181,7 +181,7 @@ export function Sidebar({
                 collapsed ? "justify-center" : ""
               }`}
             >
-              <Users size={14} aria-hidden className="text-[#6b6f7a]" />
+              <Users size={14} aria-hidden className="text-[#8a8d98]" />
               {!collapsed && "Members"}
             </button>
           </li>
@@ -205,7 +205,7 @@ export function Sidebar({
               <p className="truncate text-[11.5px] font-medium text-[#e8e9ee]" data-testid="guest-name">
                 {user.name}
               </p>
-              <p className="truncate text-[10px] text-[#5f626b]">This browser</p>
+              <p className="truncate text-[10px] text-[#7f828d]">This browser</p>
             </div>
           )}
         </div>

@@ -30,7 +30,7 @@ export default function GlobalError({
           </a>
         </div>
         {error.digest && (
-          <p className="mt-3 font-mono text-[10px] text-[#4f525b]">ref: {error.digest}</p>
+          <p className="mt-3 font-mono text-[10px] text-[#8a8d98]">ref: {error.digest}</p>
         )}
       </div>
     </main>
