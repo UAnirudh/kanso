@@ -74,6 +74,22 @@ jobs:
 
       - run: npm ci
 
+      # The browser bundle is the largest download in this job and the one part of it that
+      # `setup-node`'s npm cache cannot cover. On 2026-11-26 a stalling Ubuntu mirror turned
+      # this job from 2m02s into 6m47s (run 45783219235), so keep it between runs instead of
+      # re-fetching it every time. Keyed on the *installed* Playwright version, which is what
+      # pins the Chromium revision `playwright install` looks for, so the key changes exactly
+      # when a different bundle would be needed and never restores a mismatched browser.
+      - id: playwright
+        run: |
+          version=$(node -p 'require("@playwright/test/package.json").version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
       # `--with-deps` installs the shared libraries Chromium needs on a bare runner;
       # without it the browser launches and dies on a missing .so before the first test.
       # Only chromium: playwright.config.ts defines that project alone.
