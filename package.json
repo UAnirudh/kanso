@@ -13,7 +13,8 @@
     "e2e:server": "node scripts/reset.mjs && node -e \"require('node:fs').rmSync('.next',{recursive:true,force:true})\" && next dev -p 3100",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test"
+    "e2e:setup": "bash scripts/setup-test-env.sh",
+    "test:e2e": "bash scripts/run-e2e.sh"
   },
   "dependencies": {
     "better-sqlite3": "12.2.0",
@@ -30,6 +31,7 @@
     "sharp": "0.35.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.1",
     "@playwright/test": "^1.51.1",
     "@tailwindcss/postcss": "4.1.13",
     "@types/better-sqlite3": "7.6.12",

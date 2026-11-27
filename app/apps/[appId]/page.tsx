@@ -5,7 +5,6 @@ import { WorkspaceSkeleton } from "@/components/workspace/WorkspaceSkeleton";
 import { providerInfo } from "@/lib/ai/provider";
 import { requireGuest, type Guest } from "@/lib/identity";
 import { HttpError } from "@/lib/errors";
-import { listAiRequests } from "@/lib/repo/ai";
 import { requireAppAccess } from "@/lib/repo/apps";
 import { listActivity, listRecords } from "@/lib/repo/records";
 import { listMembers } from "@/lib/repo/workspaces";
@@ -50,10 +49,6 @@ async function WorkspaceScreen({ access, guest }: { access: AppAccess; guest: Gu
   const history = interfaceHistory(access, guest.id).slice(0, 30);
   const members = listMembers(access.workspace.id);
   const provider = providerInfo();
-
-  // Recorded so the assistant panel can show recent prompts in future revisions
-  // of this screen without another round trip.
-  void listAiRequests(access.app.id, guest.id, 5);
 
   return (
     <WorkspaceClient

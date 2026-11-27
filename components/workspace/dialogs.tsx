@@ -199,7 +199,7 @@ export function TaskDialog({
             {editing && state?.task && canEdit && (
               <button
                 type="button"
-                className={`btn ${confirmDelete ? "btn-danger" : "btn-ghost"} btn-sm`}
+                className={`btn tap-target ${confirmDelete ? "btn-danger" : "btn-ghost"} btn-sm`}
                 onClick={async () => {
                   if (!confirmDelete) {
                     setConfirmDelete(true);
@@ -453,7 +453,7 @@ export function MembersDialog({
           <li key={member.userId} className="flex items-center justify-between gap-3 py-2.5">
             <div className="min-w-0">
               <p className="truncate text-[12.5px] text-[#e8e9ee]">{member.name}</p>
-              <p className="truncate text-[11px] text-[#6b6f7a]">
+              <p className="truncate text-[11px] text-[#8a8d98]">
                 {member.role === "owner" ? "Created this workspace" : "Joined from another browser"}
               </p>
             </div>
@@ -464,7 +464,7 @@ export function MembersDialog({
                 </label>
                 <select
                   id={`role-${member.userId}`}
-                  className="field h-[28px] w-[92px] text-[11.5px]"
+                  className="field role-select w-[92px] text-[11.5px]"
                   value={member.role}
                   disabled={busy}
                   onChange={async (event) => {
@@ -505,13 +505,13 @@ export function MembersDialog({
         </p>
       )}
 
-      <p className="mt-4 text-[11px] leading-relaxed text-[#5f626b]">
+      <p className="mt-4 text-[11px] leading-relaxed text-[#7f828d]">
         Roles: <strong className="text-[#82858f]">owner/admin</strong> manage members and settings ·{" "}
         <strong className="text-[#82858f]">member</strong> edits tasks ·{" "}
         <strong className="text-[#82858f]">viewer</strong> reads only. Interface customisation is
         always private to the browser making it.
       </p>
-      <p className="mt-2 text-[11px] leading-relaxed text-[#5f626b]">
+      <p className="mt-2 text-[11px] leading-relaxed text-[#7f828d]">
         There is no sign-in yet, so a guest name identifies a browser rather than a verified
         person, and clearing this browser&apos;s cookies starts a new guest. No browser owns the
         shared workspace, so a new guest can still manage it and remove the stale row.

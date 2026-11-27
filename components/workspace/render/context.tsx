@@ -48,6 +48,7 @@ export interface SurfaceApi {
     status?: TaskStatus;
   }) => Promise<boolean>;
   createNote: (text: string) => Promise<boolean>;
+  deleteNote: (noteId: string) => Promise<boolean>;
   updateNodeProps: (nodeId: string, props: Record<string, unknown>) => void;
 }
 

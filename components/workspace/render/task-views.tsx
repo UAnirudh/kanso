@@ -86,9 +86,11 @@ export function TaskBoardView({ node }: { node: InterfaceNode }) {
                         type="button"
                         onClick={() => api.openTask(task)}
                         className="block w-full text-left"
-                        aria-label={`Open ${task.title}`}
                       >
-                        <span className="task-title block">{task.title}</span>
+                        <span className="task-title block">
+                          <span className="sr-only">Open </span>
+                          {task.title}
+                        </span>
                         <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           {priorityPill(task.priority)}
                           {duePill(task)}
@@ -97,9 +99,9 @@ export function TaskBoardView({ node }: { node: InterfaceNode }) {
                       {api.canEdit && task.status !== "done" && (
                         <button
                           type="button"
-                          className="s-btn s-btn-ghost mt-1 -ml-1.5 h-5 text-[10px]"
+                          className="s-btn s-btn-ghost tap-target tap-target-below mt-1 -ml-1.5 h-5 text-[10px]"
                           onClick={() => api.toggleTask(task)}
-                          aria-label={`Mark ${task.title} done`}
+                          aria-label={`Mark done: ${task.title}`}
                         >
                           Mark done
                         </button>
@@ -153,14 +155,16 @@ export function TaskListView({ node }: { node: InterfaceNode }) {
             const due = dueMeta(task.dueDate);
             return (
               <li key={task.id} className="flex items-start gap-2.5 py-2 first:pt-0 last:pb-0">
-                <input
-                  type="checkbox"
-                  className="mt-[3px] h-3.5 w-3.5 shrink-0 cursor-pointer accent-[var(--s-accent)]"
-                  checked={task.status === "done"}
-                  disabled={!api.canEdit || api.busy}
-                  onChange={() => api.toggleTask(task)}
-                  aria-label={`Mark ${task.title} complete`}
-                />
+                <label className="tap-target mt-[3px] grid h-3.5 w-3.5 shrink-0 place-items-center">
+                  <input
+                    type="checkbox"
+                    className="h-3.5 w-3.5 cursor-pointer accent-[var(--s-accent)]"
+                    checked={task.status === "done"}
+                    disabled={!api.canEdit || api.busy}
+                    onChange={() => api.toggleTask(task)}
+                    aria-label={`Mark ${task.title} complete`}
+                  />
+                </label>
                 <button
                   type="button"
                   onClick={() => api.openTask(task)}
@@ -373,7 +377,7 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
         <div className="flex items-center gap-0.5">
           <button
             type="button"
-            className="s-btn s-btn-ghost h-6 w-6 px-0"
+            className="s-btn s-btn-ghost tap-target h-6 w-6 px-0"
             onClick={() => updateOffset(offset - 1)}
             aria-label="Previous month"
           >
@@ -381,7 +385,7 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
           </button>
           <button
             type="button"
-            className="s-btn s-btn-ghost h-6 px-1.5 text-[10.5px]"
+            className="s-btn s-btn-ghost tap-target h-6 px-1.5 text-[10.5px]"
             onClick={() => updateOffset(0)}
             disabled={offset === 0}
           >
@@ -389,7 +393,7 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
           </button>
           <button
             type="button"
-            className="s-btn s-btn-ghost h-6 w-6 px-0"
+            className="s-btn s-btn-ghost tap-target h-6 w-6 px-0"
             onClick={() => updateOffset(offset + 1)}
             aria-label="Next month"
           >
@@ -419,7 +423,7 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
               <button
                 key={task.id}
                 type="button"
-                className="cal-task"
+                className="cal-task tap-target"
                 onClick={() => api.openTask(task)}
                 title={task.title}
               >

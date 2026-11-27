@@ -2,10 +2,11 @@
  * Proves a release's migrations apply to a database that already holds the previous
  * schema — the deploy failure a fresh-database test cannot see.
  *
- *   1. Build a database at migration 0003 using the real runner (`--until`).
- *   2. Run the runner again, so 0004 applies on top of that schema.
- *   3. Check `PRAGMA foreign_key_check` and `integrity_check`, that all four
- *      migrations are recorded, and that migration 0004's index exists.
+ *   1. Build a database at the second-to-last migration using the real runner (`--until`).
+ *   2. Run the runner again, so the newest file applies on top of that schema.
+ *   3. Check `PRAGMA foreign_key_check` and `integrity_check`, that every file is
+ *      recorded, and that the pending migration's index exists (currently the
+ *      `0004_ai_requests_created_at` index, which is the newest file on disk).
  *
  * Run locally with `node scripts/migrate-check.mjs`; CI runs the same command.
  * The temporary database lives under the OS temp dir and is removed even on failure.

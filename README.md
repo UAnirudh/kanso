@@ -6,8 +6,11 @@ styling are per-user, validated, versioned and reversible.
 
 - Generate a working project workspace from a sentence.
 - Ask for changes in plain language ("move my tasks left, add a progress chart right, dark mode").
-- Preview the change, apply it, undo it, restore any earlier version.
+- Preview the change, apply it, undo it, restore any earlier version, or reset to the generated layout.
+- Rename or delete applications you no longer test with, from the dashboard.
 - Teammates share the data but never each other's layout.
+- Create an account to carry your interface and role to another device; guests keep working
+  without one.
 
 Under the hood the assistant never writes code: it proposes typed operations against a validated
 interface document, which the server checks, previews, applies and versions.
@@ -32,10 +35,14 @@ npm run db:migrate             # creates .data/kanso.db and applies migrations
 npm run dev                    # http://localhost:3000
 ```
 
-Open the app — there is no sign-in — describe an application, and you land in a working workspace. Each browser receives a private guest identity inside one shared workspace, so you should see the interface immediately.
+Open the app — no account is required — describe an application, and you land in a working workspace. Each browser receives a private guest identity inside one shared workspace, so you should see the interface immediately. To use that identity on a second device, create an account from **Save this browser** in the header.
 
 Requirements: Node.js 20.9+ (developed on Node 24), npm. No external services are required —
 SQLite is local, and the interface assistant works without any API key.
+
+**Use Node 20–24.** `better-sqlite3` 12.x ships no prebuilt binary for Node 25+, so `npm install`
+fails there while compiling the native module. Node 24 is what the Docker image and the test suite
+are verified on; `.nvmrc` pins it, so `nvm use` selects the right runtime.
 
 ## Environment
 
@@ -62,14 +69,19 @@ and says so in the UI — it never pretends to be a model.
 | `npm run dev` | Development server |
 | `npm run build` / `npm start` | Production build and server |
 | `npm run typecheck` | `tsc --noEmit` (strict) |
-| `npm test` | Vitest unit suite (engine, planner, validation) |
-| `npm run test:e2e` | Playwright acceptance suite (starts its own server on :3100 with a fresh DB) |
+| `npm test` | Vitest unit suite (engine, planner, validation, accounts, sessions, credential budgets) |
+| `npm run e2e:setup` | One-time browser setup: Chromium plus its system libraries, no root needed |
+| `npm run test:e2e` | Playwright acceptance and axe accessibility suites (starts its own server on :3100 with a fresh DB) |
 | `npm run db:migrate` | Apply pending SQL migrations |
 | `npm run db:reset` | Delete the local database (schema rebuilds on next request) |
 | `node scripts/shots.mjs` | Screenshot the running app to `screenshots/` for visual QA |
 | `node scripts/ai-provider-check.mjs` | Provider error-path check (uses an invalid key against a local server) |
 
-The Playwright suite needs browsers once: `npx playwright install chromium`.
+The Playwright suite needs the browser installed once: `npm run e2e:setup`. The script
+checks the Node version, downloads Chromium, and on Linux extracts the libraries Chromium needs
+(`libnss3`, `libatk`, fonts, …) into `~/.cache/kanso-e2e-deps` when they are missing — Playwright's
+own `install-deps` requires root, this does not. `npm run test:e2e` sources that environment
+automatically. Set `KANSO_E2E_DEPS` to put the prefix somewhere else.
 
 ## How personalization works
 
@@ -95,7 +107,8 @@ components/workspace/   shell (sidebar, top bar), assistant panel, history, dial
 components/workspace/render/  surface canvas, registry, the ten component views
 lib/interface/          types, catalogue, operations, engine, store, service, templates, controls
 lib/ai/                 provider adapter, prompts, local planner, pipeline
-lib/repo/               SQL data access (guests, workspaces, apps, records, ai)
+lib/identity.ts · lib/client-origin.ts  identity resolution, cookie options, caller origin
+lib/repo/               SQL data access (guests, accounts, workspaces, apps, records, ai, budgets)
 lib/services/           application generation
 migrations/             SQL schema
 tests/ · e2e/           Vitest unit tests · Playwright acceptance tests
@@ -104,10 +117,32 @@ PRD.md · ARCHITECTURE.md · IMPLEMENTATION_PLAN.md
 AGENTS.md · CLAUDE.md · agents/   the agent contract, its pointer, and the shared task board + handoff log
 ```
 
+## Accounts, sessions and budgets
+
+Guests stay the default: no sign-up is needed to use the workspace. Creating an account **claims the
+browser's guest in place**, so the membership, personal interface documents and revisions it already
+has stay attached to the same user id — nothing is copied. From then on a session cookie resolves that
+identity on any device, so the role and the layout follow the person rather than the browser.
+
+- Passwords are hashed with scrypt (`node:crypto`, per-hash salt, constant-time compare). Only
+  SHA-256 hashes of session tokens are stored, with a 30-day expiry and pruning on sign-in.
+- Signing out revokes the session and expires the cookie; because a claimed row no longer carries a
+  device id, that browser returns as a fresh guest.
+- Credential attempts share the `rate_limit_events` sliding window: **5 sign-ins per email and 20 per
+  network per 15 minutes**, **3 sign-ups per email and 20 per network per 15 minutes**. Attempts are
+  counted before the password is checked, and the network key is a SHA-256 hash, so no IP addresses
+  are stored.
+- The per-network budget depends on a proxy that sets `x-forwarded-for` (or `x-real-ip`); requests
+  with neither header share one `unknown` bucket.
+
+There is no password reset, email verification or account deletion yet, and sign-in is not
+captcha-protected.
+
 ## Roles
 
 Every browser that opens the deployment joins the shared workspace automatically, so there is no
-invite step and no owner to appoint. The workspace is owned by Kanso itself, not by a browser, and
+invite step and no owner to appoint. A signed-in account is the same membership row, so its role
+follows it to any device. The workspace is owned by Kanso itself, not by a browser, and
 every guest joins as an `admin` — so clearing one browser's cookie can never leave the workspace with
 nobody able to manage it, and a stale guest can still be retired from the roster. `owner` / `admin`
 manage members and settings · `member` edits tasks and notes · `viewer` reads only. **Interface customization is available to every role** and is always scoped to the person
@@ -135,13 +170,17 @@ and the JSON route needs the device cookie like every other API route and answer
 ## Testing
 
 ```bash
+nvm use                       # Node 24 via .nvmrc
 npm run typecheck
 npm test
-npx playwright install chromium
+npm run e2e:setup             # once: Chromium + its system libraries
 npm run test:e2e
 ```
 
-The acceptance suite (`e2e/acceptance.spec.ts`) covers: guest identity minting with no sign-in,
+`e2e:setup` is idempotent and reports what it installed. It refuses to run on Node 25+ with an
+explanation rather than failing later inside the native SQLite build.
+
+The acceptance suite (`e2e/acceptance.spec.ts`) covers: guest identity minting,
 application generation, task creation and persistence across reload, the natural-language change
 with preview and apply, interface persistence across re-navigation, a second browser with its own
 interface over the same shared data, viewer role enforcement at the API, version restore, undo,
@@ -166,8 +205,9 @@ restarts.
 4. If Render prompts for `GROQ_API_KEY`, you can paste it now or leave it blank. Both work — with no
    key the assistant runs on the labelled deterministic planner and says so in the UI.
 5. When the service is live, open `https://<service-name>.onrender.com`. The first request creates
-   and migrates the database, then generate a workspace. There is no sign-up step: the first
-   request assigns this browser a guest identity.
+   and migrates the database, then generate a workspace. No sign-up is required: the first request
+   assigns this browser a guest identity. Create an account from the header if you want to sign in
+   from another device.
 
 **Add or change the API key later:** service → **Environment** → add or edit `GROQ_API_KEY` →
 **Save**. Render redeploys the service; the disk, and therefore all data, is untouched. Never put
@@ -235,10 +275,16 @@ live Groq completion (no key on this machine).
   software generation.
 - **No continuous learning**: personalization comes from explicit requests and saved versions only.
 - **Undo/restore** are snapshot-based; there is no operation-level redo stack or diff viewer.
-- **No sign-in yet.** Every browser joins one shared workspace automatically, so anyone with the
-  URL can read and edit the shared data, and clearing cookies starts a new guest identity. The
-  device cookie is an identity, not an authentication boundary.
-- **Members are browsers, not people.** Removing a member ends that browser's access, but with no
-  accounts it can rejoin with a fresh cookie. Removal exists to prune stale browsers from the roster,
-  not as a security control.
+- **Guests are still cheap identities.** Without signing in, every browser joins one shared
+  workspace automatically, so anyone with the URL can read and edit the shared data, and clearing
+  cookies starts a new guest identity. The device cookie is an identity, not an authentication
+  boundary; only a signed-in session is a credential.
+- **Members can be browsers or people.** Removing a guest ends that browser's access, but it can
+  rejoin with a fresh cookie; an account member can sign in again unless its password is changed.
+  Removal prunes the roster but is not a security control.
+- **No account recovery.** There is no password reset, email verification or account deletion, and
+  sign-in has no captcha. Per-network throttling trusts `x-forwarded-for`/`x-real-ip`, so a proxy
+  must set one of them.
+- **Access boundary returns a 404 screen with HTTP 200** when the route streams its loading shell
+  (no application data is exposed; the API returns 403).
 - CSV export, real-time collaboration, SSO and billing are not implemented.

@@ -65,7 +65,7 @@ export function AiPanel({
           </span>
           <div className="min-w-0">
             <p className="truncate text-[12px] font-semibold text-[#e8e9ee]">Interface assistant</p>
-            <p className="truncate text-[10px] text-[#5f626b]">
+            <p className="truncate text-[10px] text-[#7f828d]">
               {ai.kind === "model" ? `Groq · ${modelLabel}` : "Local planner · no API key"}
             </p>
           </div>
@@ -73,7 +73,7 @@ export function AiPanel({
         <button
           type="button"
           onClick={onClose}
-          className="btn btn-ghost btn-icon"
+          className="btn btn-ghost btn-icon tap-target"
           aria-label="Close assistant"
         >
           <X size={14} aria-hidden />
@@ -88,13 +88,13 @@ export function AiPanel({
                 Describe the interface you want. I only change layout, components and styling —
                 never data or permissions.
               </p>
-              <p className="mt-2 text-[11px] leading-relaxed text-[#6b6f7a]">
+              <p className="mt-2 text-[11px] leading-relaxed text-[#8a8d98]">
                 Every proposal is validated against the component schema and previewed before it
                 touches your interface. You can undo it or restore any earlier version.
               </p>
             </div>
             <div>
-              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+              <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
                 Try one
               </p>
               <div className="space-y-1.5">
@@ -198,7 +198,7 @@ export function AiPanel({
                 </ul>
               )}
 
-              <p className="mt-2.5 border-t border-[#1c1f25] pt-2 text-[10px] text-[#4f525b]">
+              <p className="mt-2.5 border-t border-[#1c1f25] pt-2 text-[10px] text-[#8a8d98]">
                 {proposal.provider === "local-planner" ? "local planner" : `${proposal.provider} · ${proposal.model}`}
                 {" · "}
                 {proposal.latencyMs}ms
@@ -252,18 +252,18 @@ export function AiPanel({
               }
             }}
             placeholder="e.g. put the task board on the left, chart on the right…"
-            className="w-full resize-none bg-transparent px-1 text-[12px] leading-relaxed text-[#e8e9ee] outline-none placeholder:text-[#4f525b]"
+            className="w-full resize-none bg-transparent px-1 text-[12px] leading-relaxed text-[#e8e9ee] outline-none placeholder:text-[#8a8d98]"
             disabled={busy}
           />
           <div className="flex items-center justify-between px-1">
-            <span className="text-[9.5px] text-[#4f525b]">
+            <span className="text-[9.5px] text-[#8a8d98]">
               Enter to send · Shift+Enter for a new line
             </span>
             <button
               type="button"
               onClick={submit}
               disabled={busy || draft.trim().length < 3}
-              className="grid h-6 w-6 place-items-center rounded-[5px] bg-[#8b7cf8] text-[#0a0a0c] transition-opacity disabled:opacity-30"
+              className="tap-target grid h-6 w-6 place-items-center rounded-[5px] bg-[#8b7cf8] text-[#0a0a0c] transition-opacity disabled:opacity-30"
               aria-label="Send request"
             >
               <ArrowUp size={13} aria-hidden />

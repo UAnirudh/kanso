@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, RotateCcw, Search } from "lucide-react";
+import { Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import type { InterfaceNode, TaskPriority } from "@/lib/interface/types";
 import { PRIORITY_LABEL, STATUS_LABEL } from "@/lib/interface/types";
 import { relativeTime } from "@/lib/format";
@@ -209,6 +209,7 @@ export function NotesPanelView({ node }: { node: InterfaceNode }) {
   const maxItems = typeof node.props.maxItems === "number" ? node.props.maxItems : 4;
   const allowAdd = node.props.allowAdd !== false;
   const [draft, setDraft] = useState("");
+  const [confirming, setConfirming] = useState<string | null>(null);
   const notes = api.notes.slice(0, maxItems);
 
   const submit = async (event: React.FormEvent) => {
@@ -216,6 +217,15 @@ export function NotesPanelView({ node }: { node: InterfaceNode }) {
     if (!draft.trim()) return;
     const ok = await api.createNote(draft.trim());
     if (ok) setDraft("");
+  };
+
+  const remove = async (noteId: string) => {
+    if (confirming !== noteId) {
+      setConfirming(noteId);
+      return;
+    }
+    const ok = await api.deleteNote(noteId);
+    if (ok) setConfirming(null);
   };
 
   return (
@@ -229,9 +239,30 @@ export function NotesPanelView({ node }: { node: InterfaceNode }) {
               key={note.id}
               className="rounded-[7px] border border-[var(--s-border)] bg-[var(--s-panel-alt)] px-2.5 py-2"
             >
-              <p className="text-[12px] font-medium leading-snug text-[var(--s-text)]">
-                {note.title}
-              </p>
+              <div className="flex items-start justify-between gap-1.5">
+                <p className="min-w-0 flex-1 text-[12px] font-medium leading-snug text-[var(--s-text)]">
+                  {note.title}
+                </p>
+                {api.canEdit && (
+                  <button
+                    type="button"
+                    onClick={() => void remove(note.id)}
+                    disabled={api.busy}
+                    aria-label={
+                      confirming === note.id
+                        ? `Confirm deleting note ${note.title}`
+                        : `Delete note ${note.title}`
+                    }
+                    className={`tap-target -mr-1 -mt-0.5 shrink-0 rounded-[4px] px-1 py-0.5 text-[9.5px] transition-colors disabled:opacity-40 ${
+                      confirming === note.id
+                        ? "bg-red-500/15 font-medium text-red-400"
+                        : "text-[var(--s-muted)] hover:bg-red-500/10 hover:text-red-400"
+                    }`}
+                  >
+                    {confirming === note.id ? "Delete?" : <Trash2 size={11} aria-hidden />}
+                  </button>
+                )}
+              </div>
               {note.description && note.description !== note.title && (
                 <p className="mt-0.5 line-clamp-3 text-[11px] leading-relaxed text-[var(--s-muted)]">
                   {note.description}
@@ -261,7 +292,7 @@ export function NotesPanelView({ node }: { node: InterfaceNode }) {
           />
           <button
             type="submit"
-            className="s-btn s-btn-primary h-[27px] shrink-0 px-2"
+            className="s-btn s-btn-primary tap-target h-[27px] shrink-0 px-2"
             aria-label="Save note"
             disabled={api.busy || !draft.trim()}
           >

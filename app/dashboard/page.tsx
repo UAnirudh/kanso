@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { ArrowUpRight, ChartColumn, LayoutGrid, Sparkles } from "lucide-react";
 import { Brand } from "@/components/brand";
-import { NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
+import { AppCardActions, NewAppForm, NewWorkspaceForm } from "@/components/dashboard/Forms";
 import { providerInfo } from "@/lib/ai/provider";
+import { signOutAction } from "@/app/actions";
 import { requireGuest } from "@/lib/identity";
 import { initials } from "@/lib/format";
 import { listAppsForUser } from "@/lib/repo/apps";
@@ -28,7 +29,7 @@ export default async function DashboardPage() {
               <ChartColumn size={12} aria-hidden />
               Metrics
             </Link>
-            <span className="hidden items-center gap-1.5 text-[11px] text-[#5f626b] sm:flex">
+            <span className="hidden items-center gap-1.5 text-[11px] text-[#7f828d] sm:flex">
               <span
                 aria-hidden
                 className={`h-1.5 w-1.5 rounded-full ${
@@ -39,6 +40,17 @@ export default async function DashboardPage() {
                 ? `Groq · ${provider.model}`
                 : "Local planner (no API key)"}
             </span>
+            {guest.email ? (
+              <form action={signOutAction}>
+                <button type="submit" className="btn btn-secondary btn-sm">
+                  Sign out
+                </button>
+              </form>
+            ) : (
+              <Link href="/sign-in" className="btn btn-secondary btn-sm">
+                Save this browser
+              </Link>
+            )}
             <div className="flex items-center gap-2 rounded-full border border-[#1c1f25] bg-[#0d0f13] py-1 pl-1 pr-2.5">
               <span
                 aria-hidden
@@ -60,7 +72,7 @@ export default async function DashboardPage() {
       <main id="main" className="mx-auto max-w-6xl px-5 py-9">
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5f626b]">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7f828d]">
               Workspace
             </p>
             <h1 className="mt-2 text-[26px] font-semibold tracking-[-0.02em]">
@@ -70,9 +82,10 @@ export default async function DashboardPage() {
               Generate an application, then ask the assistant to reorganise it. Every change is
               validated, previewed and versioned — and only applies to your own interface.
             </p>
-            <p className="mt-2 max-w-lg text-[12px] leading-relaxed text-[#6b6f7a]">
-              No account needed: this browser holds a private guest identity. Workspace data is
-              shared with everyone here; the interface is yours alone.
+            <p className="mt-2 max-w-lg text-[12px] leading-relaxed text-[#8a8d98]">
+              {guest.email
+                ? `Signed in as ${guest.email}. Your interface and role follow this account on any device. Workspace data is shared with everyone here.`
+                : "No account needed: this browser holds a private guest identity. Create an account to carry your interface and role to other devices."}
             </p>
 
             <div className="mt-7 flex items-center justify-between">
@@ -90,7 +103,7 @@ export default async function DashboardPage() {
                   <LayoutGrid size={17} className="text-[#8b7cf8]" aria-hidden />
                 </span>
                 <p className="mt-4 text-sm font-medium text-[#c8cad2]">No applications yet</p>
-                <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-relaxed text-[#6b6f7a]">
+                <p className="mx-auto mt-1 max-w-xs text-[12.5px] leading-relaxed text-[#8a8d98]">
                   Describe one on the right. You get a working project workspace with pages,
                   tasks and analytics.
                 </p>
@@ -98,17 +111,20 @@ export default async function DashboardPage() {
             ) : (
               <ul className="mt-3 grid gap-2.5 sm:grid-cols-2">
                 {apps.map((app) => (
-                  <li key={app.id}>
+                  <li
+                    key={app.id}
+                    className="flex h-full flex-col justify-between overflow-hidden rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] transition-colors hover:border-[#353a45]"
+                  >
                     <Link
                       href={`/apps/${app.id}`}
-                      className="group flex h-full flex-col justify-between rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4 transition-colors hover:border-[#353a45] hover:bg-[#0d0f13]"
+                      className="group flex flex-1 flex-col justify-between p-4"
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <p className="truncate text-[13.5px] font-medium text-[#e8e9ee]">
                             {app.name}
                           </p>
-                          <p className="mt-0.5 truncate text-[11.5px] text-[#6b6f7a]">
+                          <p className="mt-0.5 truncate text-[11.5px] text-[#8a8d98]">
                             {app.workspaceName} · {ROLE_LABEL[app.role]}
                           </p>
                         </div>
@@ -124,6 +140,11 @@ export default async function DashboardPage() {
                         <span>{app.openCount} open</span>
                       </div>
                     </Link>
+                    <AppCardActions
+                      appId={app.id}
+                      appName={app.name}
+                      canManage={app.role === "admin" || app.role === "owner"}
+                    />
                   </li>
                 ))}
               </ul>
@@ -131,7 +152,7 @@ export default async function DashboardPage() {
 
             <section className="mt-8 rounded-[12px] border border-[#1c1f25] bg-[#0b0c0f] p-5">
               <h2 className="text-[13px] font-semibold text-[#c8cad2]">Workspaces</h2>
-              <p className="mt-1 text-[12px] text-[#6b6f7a]">
+              <p className="mt-1 text-[12px] text-[#8a8d98]">
                 Applications live in a workspace. Members share the data; interfaces stay personal.
               </p>
               <ul className="mt-3 divide-y divide-[#16191e]">
@@ -166,7 +187,7 @@ export default async function DashboardPage() {
             </section>
 
             <section className="mt-4 rounded-[12px] border border-[#1c1f25] bg-[#0b0c0f] p-4">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#5f626b]">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#7f828d]">
                 Interface assistant
               </p>
               <div className="mt-2 flex items-center gap-2">
@@ -180,7 +201,7 @@ export default async function DashboardPage() {
                   {provider.kind === "model" ? "Groq connected" : "Local planner"}
                 </p>
               </div>
-              <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#6b6f7a]">
+              <p className="mt-1.5 text-[11.5px] leading-relaxed text-[#8a8d98]">
                 {provider.kind === "model"
                   ? `Model ${provider.model}. Requests are validated server-side and never reach the browser with a key.`
                   : "No GROQ_API_KEY is configured, so interface requests use a deterministic rule planner. Add the key in .env.local for model-driven changes."}

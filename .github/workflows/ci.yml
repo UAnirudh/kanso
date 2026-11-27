@@ -6,12 +6,13 @@
 name: CI
 
 on:
-  # Branch pushes are covered by the pull_request event below. Running on every push
-  # as well doubled every job (including the Docker build) for the same commit, so
-  # push stays for main only: it is the post-merge signal on the deployed branch.
+  # `main` only. A branch push would otherwise start a second copy of every job next to
+  # the pull-request run for the same commit — including the Docker build, which is the
+  # most expensive of them. Branch work is gated by the pull request below, which runs
+  # against the merge ref and is what `main`'s protection blocks on.
   push:
     branches: [main]
-  # Also gate a branch before it merges: a pull request runs these jobs instead of
+  # Gate a branch before it merges: a pull request runs these jobs instead of
   # only finding out after the commit reaches main. Fork PRs get a read-only token and
   # no secrets, which is all this workflow uses.
   pull_request:
@@ -74,6 +75,22 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # The browser bundle is the largest download in this job and the one part of it that
+      # `setup-node`'s npm cache cannot cover. On 2026-11-26 a stalling Ubuntu mirror turned
+      # this job from 2m02s into 6m47s (run 45783219235), so keep it between runs instead of
+      # re-fetching it every time. Keyed on the *installed* Playwright version, which is what
+      # pins the Chromium revision `playwright install` looks for, so the key changes exactly
+      # when a different bundle would be needed and never restores a mismatched browser.
+      - id: playwright
+        run: |
+          version=$(node -p 'require("@playwright/test/package.json").version')
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
 
       # `--with-deps` installs the shared libraries Chromium needs on a bare runner;
       # without it the browser launches and dies on a missing .so before the first test.

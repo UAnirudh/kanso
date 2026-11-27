@@ -292,6 +292,25 @@ export function WorkspaceClient(props: WorkspaceProps) {
     [appId, pushToast, router],
   );
 
+  const deleteNote = useCallback(
+    async (noteId: string) => {
+      setBusy(true);
+      try {
+        await request(`/api/apps/${appId}/records/${noteId}`, { method: "DELETE" });
+        setNotes((current) => current.filter((note) => note.id !== noteId));
+        router.refresh();
+        pushToast("Note deleted", "success");
+        return true;
+      } catch (error) {
+        pushToast(error instanceof Error ? error.message : "Could not delete the note.", "error");
+        return false;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [appId, pushToast, router],
+  );
+
   const toggleTask = useCallback(
     (task: AppRecord) => {
       void updateTask(task.id, { status: task.status === "done" ? "todo" : "done" });
@@ -339,6 +358,7 @@ export function WorkspaceClient(props: WorkspaceProps) {
       toggleTask,
       createTask: async (input) => createTask(input),
       createNote,
+      deleteNote,
       updateNodeProps,
     }),
     [
@@ -353,6 +373,7 @@ export function WorkspaceClient(props: WorkspaceProps) {
       toggleTask,
       createTask,
       createNote,
+      deleteNote,
       updateNodeProps,
     ],
   );
@@ -422,7 +443,10 @@ export function WorkspaceClient(props: WorkspaceProps) {
   }, [appId, proposal]);
 
   const mutateVersion = useCallback(
-    async (body: { action: "restore" | "undo"; revisionId?: string }, message: string) => {
+    async (
+      body: { action: "restore" | "undo" | "reset"; revisionId?: string },
+      message: string,
+    ) => {
       setBusy(true);
       try {
         const data = await request<{ document: InterfaceDocument }>(
@@ -667,7 +691,7 @@ export function WorkspaceClient(props: WorkspaceProps) {
                         </span>
                       )}
                     </div>
-                    <p className="mt-1 max-w-xl truncate text-[11.5px] text-[#5f626b]">
+                    <p className="mt-1 max-w-xl truncate text-[11.5px] text-[#7f828d]">
                       {props.app.description || "Shared workspace data, arranged your way."}
                     </p>
                   </div>
@@ -708,7 +732,7 @@ export function WorkspaceClient(props: WorkspaceProps) {
                   </SurfaceContext.Provider>
                 </div>
 
-                <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#4f525b]">
+                <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-[#8a8d98]">
                   <span className="inline-flex items-center gap-1">
                     <LockIcon /> Interface private to you
                   </span>
@@ -801,6 +825,9 @@ export function WorkspaceClient(props: WorkspaceProps) {
           void mutateVersion({ action: "restore", revisionId }, "Previous version restored")
         }
         onUndo={() => void mutateVersion({ action: "undo" }, "Last change undone")}
+        onReset={() =>
+          void mutateVersion({ action: "reset" }, "Reset to the generated layout")
+        }
       />
 
       {toast && (
@@ -825,7 +852,7 @@ export function WorkspaceClient(props: WorkspaceProps) {
             type="button"
             onClick={() => setToast(null)}
             aria-label="Dismiss"
-            className="ml-1 text-[#6b6f7a] hover:text-[#e8e9ee]"
+            className="tap-target ml-1 text-[#8a8d98] hover:text-[#e8e9ee]"
           >
             <X size={12} aria-hidden />
           </button>

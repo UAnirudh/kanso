@@ -16,7 +16,7 @@
   --color-mist-300: #c8cad2;
   --color-mist-400: #a2a5b0;
   --color-mist-500: #82858f;
-  --color-mist-600: #5f626b;
+  --color-mist-600: #7f828d;
 }
 
 :root {
@@ -28,7 +28,7 @@
   --chrome-border-strong: #2a2e37;
   --chrome-text: #e8e9ee;
   --chrome-muted: #9a9da8;
-  --chrome-faint: #6b6f7a;
+  --chrome-faint: #8a8d98;
   --accent: #8b7cf8;
   --accent-strong: #a496ff;
   --accent-soft: rgba(139, 124, 248, 0.14);
@@ -157,6 +157,27 @@ body {
     padding: 0;
     border-radius: var(--radius-sm);
   }
+  /* Icon controls stay visually small; touch input gets a 44px target around
+     them so a thumb can land without aiming. */
+  .tap-target,
+  .btn-sm {
+    position: relative;
+  }
+  .tap-target::after,
+  .btn-sm::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
+  }
+  /* For a control at the bottom of a card: the target hangs below the button
+     instead of covering the content above it. */
+  .tap-target-below::after {
+    top: 100%;
+  }
 
   .field {
     width: 100%;
@@ -191,6 +212,19 @@ body {
     padding: 0.5rem 0.65rem;
     line-height: 1.5;
     resize: vertical;
+  }
+  /* A native select cannot carry a pseudo-element target, so on touch screens
+     the role picker grows to 44px; desktop dialogs keep the compact control. */
+  .role-select {
+    height: 28px;
+  }
+  @media (pointer: coarse) {
+    .role-select {
+      height: 44px;
+    }
+    select.role-select {
+      background-position: calc(100% - 15px) center, calc(100% - 10px) center;
+    }
   }
 
   .label {
@@ -257,8 +291,8 @@ body {
   --s-panel-alt: #f3f4f6;
   --s-border: #e4e4e7;
   --s-text: #18181b;
-  --s-muted: #67707c;
-  --s-faint: #9ba1aa;
+  --s-muted: #4f5865;
+  --s-faint: #656e79;
   --s-accent: #6d5ce7;
   --s-accent-soft: rgba(109, 92, 231, 0.1);
   --s-shadow: 0 1px 2px rgba(16, 18, 22, 0.06), 0 8px 24px -18px rgba(16, 18, 22, 0.35);
@@ -275,7 +309,7 @@ body {
   --s-border: #23262d;
   --s-text: #ecedf1;
   --s-muted: #9ba0ab;
-  --s-faint: #71767f;
+  --s-faint: #8b909a;
   --s-accent: #a292ff;
   --s-accent-soft: rgba(162, 146, 255, 0.14);
   --s-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
@@ -450,7 +484,7 @@ body {
 }
 .task-card[data-done="true"] .task-title {
   text-decoration: line-through;
-  color: var(--s-faint);
+  color: var(--s-muted);
 }
 .task-title {
   font-size: 12.5px;
@@ -473,19 +507,19 @@ body {
 }
 .pill-urgent {
   background: rgba(239, 68, 68, 0.16);
-  color: #dc2626;
+  color: #b91c1c;
 }
 .pill-high {
   background: rgba(249, 115, 22, 0.16);
-  color: #ea580c;
+  color: #9a3412;
 }
 .pill-medium {
   background: rgba(59, 130, 246, 0.14);
-  color: #2563eb;
+  color: #1d4ed8;
 }
 .pill-low {
   background: rgba(100, 116, 139, 0.16);
-  color: #64748b;
+  color: #475569;
 }
 .surface[data-theme="dark"] .pill-urgent {
   color: #fca5a5;
@@ -650,7 +684,9 @@ select.s-input {
   padding: 4px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  /* Keeps stacked task chips 24px apart, so each chip can carry a 44px
+     touch target without covering the chip below it. */
+  gap: 6px;
   overflow: hidden;
   text-align: left;
   cursor: pointer;
@@ -668,16 +704,28 @@ select.s-input {
   color: var(--s-muted);
 }
 .cal-task {
+  display: flex;
+  align-items: center;
+  min-height: 18px;
   font-size: 9.5px;
   line-height: 1.25;
+  white-space: nowrap;
   padding: 1.5px 4px;
   border-radius: 3px;
   background: var(--s-accent-soft);
   color: var(--s-accent);
   font-weight: 500;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+/* Stacked chips share one cell, so each target grows away from its neighbour:
+   the first upwards over the day number, the second downwards. */
+.cal-task.tap-target::after {
+  top: 0;
+  transform: translate(-50%, -22px);
+}
+.cal-task.tap-target:nth-of-type(2)::after {
+  top: auto;
+  bottom: 0;
+  transform: translate(-50%, 22px);
 }
 
 }
