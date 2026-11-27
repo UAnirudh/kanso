@@ -1,6 +1,7 @@
 /**
  * Applies pending SQL migrations without starting the web server.
  *   npm run db:migrate
+ *   node scripts/migrate.mjs --until=0003
  * Kept in plain Node ESM so it can run before any bundler is involved.
  */
 import fs from "node:fs";
@@ -26,10 +27,25 @@ const applied = new Set(
   db.prepare("SELECT name FROM schema_migrations").all().map((row) => row.name),
 );
 
-const files = fs
+const all = fs
   .readdirSync(dir)
   .filter((name) => name.endsWith(".sql"))
   .sort();
+
+// `--until=0003` stops after that migration. It exists for the CI upgrade check:
+// build a database at the previous release with this same runner, then run it
+// again to prove the pending file applies on top instead of only from empty.
+const untilArg = process.argv.slice(2).find((arg) => arg.startsWith("--until="));
+const until = untilArg?.slice("--until=".length).trim() || null;
+let files = all;
+if (until) {
+  const end = all.findIndex((name) => name.startsWith(until));
+  if (end === -1) {
+    console.error(`No migration matches --until=${until}.`);
+    process.exit(1);
+  }
+  files = all.slice(0, end + 1);
+}
 
 // Table rebuilds need foreign-key enforcement off (the pragma is a no-op inside a
 // transaction), so it stays off for the run and every file is checked before it is

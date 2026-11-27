@@ -1,16 +1,18 @@
 # Verification gate: the checks every change must pass before review.
 # `verify` is the fast job (typecheck, unit tests, production build). `e2e` runs the
 # Playwright acceptance suite, which is what actually pins the API status codes
-# (401/403/404) and the guest/admin role boundaries.
+# (401/403/404) and the guest/admin role boundaries. `migrations`, `docker` and
+# `audit` cover the three deploy failures those two cannot see (T-015).
 name: CI
 
 on:
-  # `main` only. A branch push would otherwise start a second copy of both jobs next to
-  # the pull-request run for the same commit. Branch work is gated by the pull request
-  # below, which runs against the merge ref and is what `main`'s protection blocks on.
+  # `main` only. A branch push would otherwise start a second copy of every job next to
+  # the pull-request run for the same commit — including the Docker build, which is the
+  # most expensive of them. Branch work is gated by the pull request below, which runs
+  # against the merge ref and is what `main`'s protection blocks on.
   push:
     branches: [main]
-  # Gate a branch before it merges: a pull request runs these two jobs instead of
+  # Gate a branch before it merges: a pull request runs these jobs instead of
   # only finding out after the commit reaches main. Fork PRs get a read-only token and
   # no secrets, which is all this workflow uses.
   pull_request:
@@ -106,3 +108,69 @@ jobs:
           path: test-results
           retention-days: 7
           if-no-files-found: ignore
+
+  # T-015: a deploy is a schema change on top of existing data, not a fresh
+  # database. Build one at 0003 with the real runner, let it apply 0004 on top,
+  # then require foreign_key_check and integrity_check to pass.
+  migrations:
+    name: schema upgrade from previous release
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm ci
+
+      - run: node scripts/migrate-check.mjs
+
+  # The image is built by node:22-bookworm-slim's npm on amd64, so a lockfile or
+  # native module that works on this host can still fail here — the exact Render
+  # failure mode. The smoke test also writes a guest, restarts and compares rows
+  # on the volume, so it covers persistence, not just `docker build`.
+  docker:
+    name: docker build · volume smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: bash docker/smoke-test.sh
+
+      # The runner is disposable, but leaving the container running hides failures
+      # in later steps and wastes the job's disk. The script leaves it for local
+      # inspection; CI removes it either way.
+      - if: always()
+        run: |
+          docker rm -f kanso-test >/dev/null 2>&1 || true
+          docker volume rm kanso-data >/dev/null 2>&1 || true
+
+  # A green build says nothing about a known CVE in a dependency. High and
+  # critical only: gating on low advisories turns the job into noise people learn
+  # to bypass.
+  audit:
+    name: npm audit (high)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - run: npm audit --audit-level=high
