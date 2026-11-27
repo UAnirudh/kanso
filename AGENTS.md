@@ -152,17 +152,19 @@ docker/                     entrypoint (chown the mount, drop to `kanso`) + loca
 | Cross-cutting | full ladder: `typecheck` → `test` → `build` → `test:e2e` |
 
 `npm run typecheck` → `npm test` → `npm run build` (the `verify` job) and `npm run test:e2e`
-(the `e2e` job, after `npx playwright install --with-deps chromium`) both run in CI on every pull
+(the `e2e` job, inside the pinned Playwright container) both run in CI on every pull
 request, and on every push to `main` (`.github/workflows/ci.yml`, Node 22, no `GROQ_API_KEY`),
 next to `migrations` (a database at the previous migration, then the pending files and
 `PRAGMA foreign_key_check`), `docker` (image build + `bash docker/smoke-test.sh`) and `audit`
 (`npm audit --audit-level=high`).
 A push to a branch runs nothing by itself: `pull_request` is the branch gate, so the checks appear
-once the branch has a PR, and `main` gets one run after a merge. The `e2e` job restores
-`~/.cache/ms-playwright` with `actions/cache` before installing, keyed on the installed
-`@playwright/test` version, so the Chromium bundle is fetched once per Playwright upgrade rather
-than once per run; `--with-deps` still apt-installs the font packages every time, which is the only
-part of the job a stalling Ubuntu mirror can still inflate. The only row in this table CI still
+once the branch has a PR, and `main` gets one run after a merge. The `e2e` job runs in the
+`mcr.microsoft.com/playwright:v1.65.1-noble` container, pinned to the `@playwright/test` version in
+the lockfile. That image already contains Chromium and its shared libraries, so the job downloads no
+browser and touches no `apt` sources — the two steps a stalling Ubuntu mirror inflated on 2026-11-26
+and a mirror without the archive failed outright on 2026-11-27 (`fonts-freefont-ttf` unavailable,
+exit 100). Bump the tag in the same change as `@playwright/test`: a mismatched image leaves
+Playwright looking for a Chromium revision it does not ship. The only row in this table CI still
 cannot run is the model-key check. `main` is protected: `verify` and `e2e` are required status
 checks and admin bypass is disabled, so a red pull request cannot merge — and a direct push is
 refused until the checks have run. The `migrations`, `docker` and `audit` jobs report on every pull
