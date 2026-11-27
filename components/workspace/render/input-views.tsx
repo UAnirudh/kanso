@@ -196,7 +196,7 @@ export function QuickCreateTaskView({ node }: { node: InterfaceNode }) {
             You have view-only access in this workspace.
           </p>
         )}
-        <p aria-live="polite" className="min-h-[14px] text-[10.5px] text-red-500">
+        <p aria-live="polite" className="min-h-[14px] text-[10.5px] text-[var(--s-danger)]">
           {error}
         </p>
       </form>

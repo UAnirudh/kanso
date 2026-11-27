@@ -71,7 +71,7 @@ and says so in the UI — it never pretends to be a model.
 | `npm run typecheck` | `tsc --noEmit` (strict) |
 | `npm test` | Vitest unit suite (engine, planner, validation, accounts, sessions, credential budgets) |
 | `npm run e2e:setup` | One-time browser setup: Chromium plus its system libraries, no root needed |
-| `npm run test:e2e` | Playwright acceptance and axe accessibility suites, including both interface themes (starts its own server on :3100 with a fresh DB) |
+| `npm run test:e2e` | Playwright acceptance and axe accessibility suites, every workspace page in both themes (starts its own server on :3100 with a fresh DB) |
 | `npm run db:migrate` | Apply pending SQL migrations |
 | `npm run db:reset` | Delete the local database (schema rebuilds on next request) |
 | `node scripts/shots.mjs` | Screenshot the running app to `screenshots/` for visual QA |

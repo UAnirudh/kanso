@@ -48,7 +48,7 @@ export function StatSummaryView({ node }: { node: InterfaceNode }) {
             >
               <dd
                 className={`text-[19px] font-semibold leading-none tracking-[-0.02em] ${
-                  alarming ? "text-red-500" : "text-[var(--s-text)]"
+                  alarming ? "text-[var(--s-danger)]" : "text-[var(--s-text)]"
                 }`}
               >
                 {value}
