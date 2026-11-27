@@ -373,6 +373,23 @@ trade-off is coverage: axe sees what is computable from the DOM on three surface
 order, focus management, zoom/reflow and screen-reader announcements still need manual checks,
 and dark-theme pages are not yet scanned because the suite does not switch themes.
 
+**ADR-14 — Both interface palettes are gated, not just the light one.**
+ADR-13 left one surface unscanned: the rendered interface has a second palette behind
+`data-theme="dark"`, with its own `--s-*` tokens, priority-pill overrides and primary-button text,
+while the suite never switched themes. The chrome is deliberately single-palette (`:root` fixes
+`color-scheme: dark` and the chrome tokens have no light variant), so the dashboard and `/sign-in`
+were already the dark shell; only the workspace needed a second pass. `e2e/accessibility.spec.ts`
+now drives the real Appearance → Theme control, asserts `data-theme` and `aria-pressed`, and runs
+the same WCAG 2.0/2.1 A/AA serious/critical gate on the workspace in light and dark. The dark
+palette needed no colour fixes: the first run evaluated 100 contrast nodes and reported no
+violations. Two axe `incomplete` results are identical in both palettes and stay ungated: the
+status and priority selects draw their arrow with a CSS gradient, which axe will not resolve to a
+background, and a task-count badge carried an `aria-label` on a role-less `span`
+(`aria-prohibited-attr`) — the label was removed because the badge already sits beside the card
+title. Accent, density and navigation changes reuse the same scanned components, so they are not
+audited as separate variants, and axe still cannot see keyboard order, focus management or
+screen-reader announcements.
+
 ## 10. Request flows (concrete)
 
 **Sign up / sign in** → the `/sign-in` form actions check both credential budgets (email and network)
