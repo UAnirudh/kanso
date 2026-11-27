@@ -86,9 +86,11 @@ export function TaskBoardView({ node }: { node: InterfaceNode }) {
                         type="button"
                         onClick={() => api.openTask(task)}
                         className="block w-full text-left"
-                        aria-label={`Open ${task.title}`}
                       >
-                        <span className="task-title block">{task.title}</span>
+                        <span className="task-title block">
+                          <span className="sr-only">Open </span>
+                          {task.title}
+                        </span>
                         <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
                           {priorityPill(task.priority)}
                           {duePill(task)}
@@ -99,7 +101,7 @@ export function TaskBoardView({ node }: { node: InterfaceNode }) {
                           type="button"
                           className="s-btn s-btn-ghost tap-target tap-target-below mt-1 -ml-1.5 h-5 text-[10px]"
                           onClick={() => api.toggleTask(task)}
-                          aria-label={`Mark ${task.title} done`}
+                          aria-label={`Mark done: ${task.title}`}
                         >
                           Mark done
                         </button>

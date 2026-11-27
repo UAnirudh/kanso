@@ -26,7 +26,7 @@ export default async function SignInPage() {
       </header>
 
       <main id="main" className="mx-auto max-w-3xl px-5 py-10">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5f626b]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7f828d]">
           Your identity
         </p>
         <h1 className="mt-2 text-[24px] font-semibold tracking-[-0.02em]">
@@ -38,7 +38,7 @@ export default async function SignInPage() {
           phone.
         </p>
         {viewer ? (
-          <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-[#6b6f7a]">
+          <p className="mt-2 max-w-xl text-[12px] leading-relaxed text-[#8a8d98]">
             Creating an account now claims this browser&apos;s identity ({viewer.name}), so the
             applications, revisions and role you already have come with you.
           </p>
@@ -47,7 +47,7 @@ export default async function SignInPage() {
         <div className="mt-7 grid gap-4 md:grid-cols-2">
           <section className="rounded-[12px] border border-[#262a32] bg-[#0b0c0f] p-5">
             <h2 className="text-[13px] font-semibold text-[#c8cad2]">Create an account</h2>
-            <p className="mt-1 text-[12px] leading-relaxed text-[#6b6f7a]">
+            <p className="mt-1 text-[12px] leading-relaxed text-[#8a8d98]">
               One account, one identity. Your personal interface documents stay yours.
             </p>
             <SignUpForm defaultName={viewer?.name} />
@@ -55,14 +55,14 @@ export default async function SignInPage() {
 
           <section className="rounded-[12px] border border-[#262a32] bg-[#0b0c0f] p-5">
             <h2 className="text-[13px] font-semibold text-[#c8cad2]">Sign in</h2>
-            <p className="mt-1 text-[12px] leading-relaxed text-[#6b6f7a]">
+            <p className="mt-1 text-[12px] leading-relaxed text-[#8a8d98]">
               Already have an account? Pick up the interface and role you left.
             </p>
             <SignInForm />
           </section>
         </div>
 
-        <p className="mt-6 text-[11.5px] leading-relaxed text-[#5f626b]">
+        <p className="mt-6 text-[11.5px] leading-relaxed text-[#7f828d]">
           Guests keep working: without an account this browser holds a private guest identity, and
           workspace data is shared with everyone here.{" "}
           {provider.kind === "model" ? `Generation runs on ${provider.model}.` : "Generation uses the local planner."}

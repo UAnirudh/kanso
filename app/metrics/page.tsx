@@ -66,7 +66,7 @@ export default async function MetricsPage() {
               <ArrowLeft size={12} aria-hidden />
               Dashboard
             </Link>
-            <span className="hidden items-center gap-1.5 text-[11px] text-[#5f626b] sm:flex">
+            <span className="hidden items-center gap-1.5 text-[11px] text-[#7f828d] sm:flex">
               <span
                 aria-hidden
                 className={`h-1.5 w-1.5 rounded-full ${
@@ -86,7 +86,7 @@ export default async function MetricsPage() {
       </header>
 
       <main id="main" className="mx-auto max-w-4xl px-5 py-9">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#5f626b]">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#7f828d]">
           AI operations
         </p>
         <h1 className="mt-2 text-[26px] font-semibold tracking-[-0.02em]">
@@ -97,7 +97,7 @@ export default async function MetricsPage() {
           to. Spend is global, because the daily cap is the budget that decides whether new
           requests run at all.
         </p>
-        <p className="mt-2 text-[11.5px] text-[#5f626b]">
+        <p className="mt-2 text-[11.5px] text-[#7f828d]">
           Since {since} · read-only · same numbers as{" "}
           <code className="rounded-[4px] border border-[#1c1f25] bg-[#0b0c0f] px-1 py-0.5 text-[10.5px] text-[#a2a5b0]">
             /api/metrics
@@ -106,7 +106,7 @@ export default async function MetricsPage() {
 
         <dl className="mt-7 grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4">
-            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
               Spend today
             </dt>
             <dd className="mt-2">
@@ -114,7 +114,7 @@ export default async function MetricsPage() {
                 {count(spend.today)}
                 <span className="ml-1.5 text-[11px] font-normal text-[#82858f]">tokens</span>
               </span>
-              <span className="mt-1 block text-[11px] leading-relaxed text-[#6b6f7a]">
+              <span className="mt-1 block text-[11px] leading-relaxed text-[#8a8d98]">
                 {spend.cap === null
                   ? "No daily cap is set."
                   : `${Math.round((spend.today / spend.cap) * 100)}% of ${count(spend.cap)} · ${count(
@@ -125,14 +125,14 @@ export default async function MetricsPage() {
           </div>
 
           <div className="rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4">
-            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
               Acceptance rate
             </dt>
             <dd className="mt-2">
               <span className="block text-[22px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
                 {percent(proposals.acceptanceRate)}
               </span>
-              <span className="mt-1 block text-[11px] leading-relaxed text-[#6b6f7a]">
+              <span className="mt-1 block text-[11px] leading-relaxed text-[#8a8d98]">
                 {count(proposals.accepted)} of {count(proposals.resolved)} decided, no re-ask within{" "}
                 {Math.round(proposals.retryWindowSeconds / 60)} min
               </span>
@@ -140,7 +140,7 @@ export default async function MetricsPage() {
           </div>
 
           <div className="rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4">
-            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
               Proposals
             </dt>
             <dd className="mt-2">
@@ -150,21 +150,21 @@ export default async function MetricsPage() {
                   in {metrics.window.days} days
                 </span>
               </span>
-              <span className="mt-1 block text-[11px] leading-relaxed text-[#6b6f7a]">
+              <span className="mt-1 block text-[11px] leading-relaxed text-[#8a8d98]">
                 {count(proposals.pending)} pending · not counted in the rate
               </span>
             </dd>
           </div>
 
           <div className="rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4">
-            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
               p50 latency
             </dt>
             <dd className="mt-2">
               <span className="block text-[22px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
                 {millis(latencyMs.p50)}
               </span>
-              <span className="mt-1 block text-[11px] leading-relaxed text-[#6b6f7a]">
+              <span className="mt-1 block text-[11px] leading-relaxed text-[#8a8d98]">
                 median over {count(latencyMs.samples)}{" "}
                 {latencyMs.samples === 1 ? "sample" : "samples"}
               </span>
@@ -172,14 +172,14 @@ export default async function MetricsPage() {
           </div>
 
           <div className="rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4">
-            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
               p95 latency
             </dt>
             <dd className="mt-2">
               <span className="block text-[22px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
                 {millis(latencyMs.p95)}
               </span>
-              <span className="mt-1 block text-[11px] leading-relaxed text-[#6b6f7a]">
+              <span className="mt-1 block text-[11px] leading-relaxed text-[#8a8d98]">
                 slow tail, same {count(latencyMs.samples)}{" "}
                 {latencyMs.samples === 1 ? "sample" : "samples"}
               </span>
@@ -187,14 +187,14 @@ export default async function MetricsPage() {
           </div>
 
           <div className="rounded-[11px] border border-[#1c1f25] bg-[#0b0c0f] p-4">
-            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+            <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
               Tokens per applied change
             </dt>
             <dd className="mt-2">
               <span className="block text-[22px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
                 {tokens.perAppliedChange === null ? "—" : count(tokens.perAppliedChange)}
               </span>
-              <span className="mt-1 block text-[11px] leading-relaxed text-[#6b6f7a]">
+              <span className="mt-1 block text-[11px] leading-relaxed text-[#8a8d98]">
                 {count(tokens.total)} tokens over the window
               </span>
             </dd>
@@ -210,13 +210,13 @@ export default async function MetricsPage() {
               PRD target &lt; 90 s
             </span>
           </div>
-          <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[#6b6f7a]">
+          <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[#8a8d98]">
             From this browser's first open of an app — when its interface was initialized — to
             the first assistant change it actually applied.
           </p>
           <dl className="mt-4 flex flex-wrap items-end gap-x-10 gap-y-3">
             <div>
-              <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+              <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
                 Median
               </dt>
               <dd className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
@@ -231,7 +231,7 @@ export default async function MetricsPage() {
               </dd>
             </div>
             <div>
-              <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#5f626b]">
+              <dt className="text-[10.5px] font-semibold uppercase tracking-[0.1em] text-[#7f828d]">
                 Samples
               </dt>
               <dd className="mt-1 text-[24px] font-semibold tracking-[-0.02em] text-[#e8e9ee]">
@@ -240,7 +240,7 @@ export default async function MetricsPage() {
             </div>
           </dl>
           {metrics.timeToFirstPersonalizationMs.samples === 0 && (
-            <p className="mt-4 rounded-[10px] border border-dashed border-[#262a32] px-4 py-3 text-[12px] text-[#6b6f7a]">
+            <p className="mt-4 rounded-[10px] border border-dashed border-[#262a32] px-4 py-3 text-[12px] text-[#8a8d98]">
               No first personalization from this browser in the window yet — apply one assistant
               change and the first sample appears.
             </p>
@@ -249,7 +249,7 @@ export default async function MetricsPage() {
 
         <section className="mt-8 rounded-[12px] border border-[#1c1f25] bg-[#0b0c0f] p-5">
           <h2 className="text-[13px] font-semibold text-[#c8cad2]">Proposal outcomes</h2>
-          <p className="mt-1 text-[12px] text-[#6b6f7a]">
+          <p className="mt-1 text-[12px] text-[#8a8d98]">
             Every proposal the assistant generated, by what happened to it. The acceptance rate
             above counts applied without a retry over decided proposals (applied + discarded +
             failed), so a preview still waiting for a decision does not move it.
@@ -260,7 +260,7 @@ export default async function MetricsPage() {
               Proposals by outcome in the last {metrics.window.days} days
             </caption>
             <thead>
-              <tr className="text-left text-[10.5px] uppercase tracking-[0.1em] text-[#5f626b]">
+              <tr className="text-left text-[10.5px] uppercase tracking-[0.1em] text-[#7f828d]">
                 <th scope="col" className="pb-2 font-semibold">
                   Outcome
                 </th>
@@ -277,7 +277,7 @@ export default async function MetricsPage() {
                 <tr key={outcome.label}>
                   <th scope="row" className="py-2.5 text-left font-normal">
                     <span className="block text-[#c8cad2]">{outcome.label}</span>
-                    <span className="block text-[10.5px] text-[#5f626b]">{outcome.hint}</span>
+                    <span className="block text-[10.5px] text-[#7f828d]">{outcome.hint}</span>
                   </th>
                   <td className="py-2.5 text-right tabular-nums text-[#e8e9ee]">
                     {count(outcome.count)}
@@ -306,7 +306,7 @@ export default async function MetricsPage() {
           </table>
 
           {proposals.retried > 0 && (
-            <p className="mt-3 text-[11.5px] leading-relaxed text-[#6b6f7a]">
+            <p className="mt-3 text-[11.5px] leading-relaxed text-[#8a8d98]">
               {count(proposals.retried)} applied {proposals.retried === 1 ? "proposal was" : "proposals were"}{" "}
               followed by another request for the same app within{" "}
               {Math.round(proposals.retryWindowSeconds / 60)} minutes, so{" "}
@@ -316,7 +316,7 @@ export default async function MetricsPage() {
           )}
 
           {proposals.total === 0 && (
-            <p className="mt-4 rounded-[10px] border border-dashed border-[#262a32] px-4 py-3 text-[12px] leading-relaxed text-[#6b6f7a]">
+            <p className="mt-4 rounded-[10px] border border-dashed border-[#262a32] px-4 py-3 text-[12px] leading-relaxed text-[#8a8d98]">
               Nothing in this window yet. Ask the assistant for a change on any application and its
               outcome will appear here —{" "}
               <Link
@@ -330,7 +330,7 @@ export default async function MetricsPage() {
           )}
         </section>
 
-        <p className="mt-6 text-[11px] leading-relaxed text-[#5f626b]">
+        <p className="mt-6 text-[11px] leading-relaxed text-[#7f828d]">
           The local planner records no tokens, so a run without a model key shows real acceptance
           and latency with zero spend. Percentiles are nearest-rank; a retry is another request
           from the same browser for the same app inside the window above.
