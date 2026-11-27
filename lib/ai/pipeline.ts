@@ -23,6 +23,7 @@ export interface ProposalView {
   message: string;
   operations: InterfaceOperation[];
   warnings: string[];
+  baseDocument: InterfaceDocument;
   proposedDocument: InterfaceDocument;
   provider: string;
   model: string;
@@ -199,6 +200,7 @@ export async function proposeInterfaceChange(input: {
       message,
       operations,
       warnings,
+      baseDocument: document,
       proposedDocument: proposed,
       provider: info.provider,
       model: info.model,

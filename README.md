@@ -274,7 +274,9 @@ live Groq completion (no key on this machine).
 - **Application generation is template-constrained** (two templates) by design; it is not arbitrary
   software generation.
 - **No continuous learning**: personalization comes from explicit requests and saved versions only.
-- **Undo/restore** are snapshot-based; there is no operation-level redo stack or diff viewer.
+- **Undo/restore** are snapshot-based; there is no operation-level redo stack, and history revisions
+  have no diff view. The assistant preview does show a component-level diff of a proposal before it
+  is applied.
 - **Guests are still cheap identities.** Without signing in, every browser joins one shared
   workspace automatically, so anyone with the URL can read and edit the shared data, and clearing
   cookies starts a new guest identity. The device cookie is an identity, not an authentication

@@ -70,6 +70,11 @@ test("per-browser adaptive interface over one shared workspace", async ({ browse
 
   // 6. A proposal is generated and previewed without saving.
   await expect(pageA.getByText("Proposed change")).toBeVisible({ timeout: 40_000 });
+  await expect(pageA.getByText("What changes")).toBeVisible();
+  const changes = pageA.getByRole("list", { name: "Interface changes" });
+  await expect(changes).toBeVisible();
+  await expect(changes.getByRole("listitem")).not.toHaveCount(0);
+  await expect(changes).toContainText("Theme: light → dark");
   await expect(pageA.getByText(/Preview ·/)).toBeVisible();
   await expect(pageA.locator(".surface")).toHaveAttribute("data-theme", "dark");
   await expect(pageA.locator('[data-node-type="ProgressChart"]')).toBeVisible();

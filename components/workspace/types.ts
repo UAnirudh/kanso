@@ -25,6 +25,7 @@ export interface AiProposalView {
   message: string;
   operations: InterfaceOperation[];
   warnings: string[];
+  baseDocument: InterfaceDocument;
   proposedDocument: InterfaceDocument;
   provider: string;
   model: string;

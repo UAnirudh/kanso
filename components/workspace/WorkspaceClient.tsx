@@ -36,6 +36,7 @@ import type {
   WorkspaceUser,
 } from "./types";
 import { CATALOG } from "@/lib/interface/catalog";
+import { diffInterfaces } from "@/lib/interface/diff";
 
 interface WorkspaceProps {
   user: WorkspaceUser;
@@ -522,6 +523,20 @@ export function WorkspaceClient(props: WorkspaceProps) {
     return { added, changed };
   }, [previewing, proposal, document, currentPageKey]);
 
+  // The canvas marks changed nodes; the panel states the same comparison in sentences,
+  // so a proposal can be reviewed without switching back and forth.
+  const changes = useMemo(
+    () =>
+      proposal
+        ? diffInterfaces(proposal.baseDocument, proposal.proposedDocument, {
+            pageTitles: Object.fromEntries(
+              props.pages.map((page) => [page.key, page.title]),
+            ),
+          })
+        : [],
+    [proposal, props.pages],
+  );
+
   const sidebarCollapsed =
     displayDocument.nav.collapsed || displayDocument.nav.width === "compact";
 
@@ -549,6 +564,7 @@ export function WorkspaceClient(props: WorkspaceProps) {
     <AiPanel
       ai={props.ai}
       proposal={proposal}
+      changes={changes}
       busy={aiBusy}
       statusText={STATUS_STEPS[step] ?? STATUS_STEPS[0]!}
       error={aiError}
