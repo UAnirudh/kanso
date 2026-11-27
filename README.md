@@ -73,6 +73,7 @@ and says so in the UI — it never pretends to be a model.
 | `npm run e2e:setup` | One-time browser setup: Chromium plus its system libraries, no root needed |
 | `npm run test:e2e` | Playwright acceptance and axe accessibility suites (starts its own server on :3100 with a fresh DB) |
 | `npm run db:migrate` | Apply pending SQL migrations |
+| `npm run db:backup` | Write an integrity-checked SQLite snapshot (`VACUUM INTO`; `--out <file>` for a path) |
 | `npm run db:reset` | Delete the local database (schema rebuilds on next request) |
 | `node scripts/shots.mjs` | Screenshot the running app to `screenshots/` for visual QA |
 | `node scripts/ai-provider-check.mjs` | Provider error-path check (uses an invalid key against a local server) |
@@ -184,9 +185,9 @@ The acceptance suite (`e2e/acceptance.spec.ts`) covers: guest identity minting,
 application generation, task creation and persistence across reload, the natural-language change
 with preview and apply, interface persistence across re-navigation, a second browser with its own
 interface over the same shared data, viewer role enforcement at the API, version restore, undo,
-mobile layout and assistant behaviour, recovery after the first browser clears its cookie, plus a
-separate spec for cookieless requests, the health endpoint, the absence of an owner row and role
-boundaries.
+mobile layout and assistant behaviour, recovery after the first browser clears its cookie, the
+per-app JSON export, plus a separate spec for cookieless requests, the health endpoint, the absence
+of an owner row and role boundaries.
 
 ## Deployment
 
@@ -246,8 +247,19 @@ the image, a volume mounted at `/var/data`, and `DATABASE_PATH=/var/data/kanso.d
 
 ### Data notes
 
-- The disk survives deploys, restarts and rebuilds. It is **not a backup**: there are no automatic
-  snapshots. Copy the file off periodically, or move to Postgres for managed backups.
+- The disk survives deploys, restarts and rebuilds, but it is **not a backup**: there are no
+  automatic snapshots. `npm run db:backup` writes a `VACUUM INTO` snapshot (default
+  `.data/backups/kanso-<timestamp>.db`, or `--out <file>`), opens the copy again, and prints
+  `integrity_check ok` only when it is readable. Inside the container, the same command defaults to
+  `/var/data/backups/`: run `docker exec kanso node scripts/backup.mjs` and copy the file off the
+  host. A snapshot includes guest identities, so treat it as sensitive.
+- **Restore:** stop the service, replace `kanso.db` with a snapshot, delete the stale
+  `kanso.db-wal` / `kanso.db-shm` files, then start again. Migrations newer than the snapshot are
+  applied on boot. Restoring an older file also rolls back the browser identities and interfaces it
+  contains.
+- **Per-app export:** `GET /api/apps/<appId>/export` downloads that app's metadata, pages, tasks and
+  notes as JSON (the same access check as every app route). It is the portable copy for one
+  application; `db:backup` is the full-database snapshot.
 - Run **one instance**. SQLite allows a single writer; a disk also pins the service to one instance.
 - Deploys restart the service briefly; there is no zero-downtime swap with a disk attached.
 

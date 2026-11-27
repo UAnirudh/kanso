@@ -39,6 +39,7 @@ Tailwind v4 · SQLite via `better-sqlite3` (WAL) · Zod · Groq (optional) · Vi
 npm install                      # or `npm ci` for a clean, lockfile-exact install
 cp .env.example .env.local       # optional; only GROQ_API_KEY needs a real value
 npm run db:migrate               # creates .data/kanso.db, applies migrations
+npm run db:backup                # integrity-checked VACUUM INTO snapshot (backups/ under the DB dir)
 npm run dev                      # http://localhost:3000
 
 npm run typecheck                # tsc --noEmit (strict) — run this always
