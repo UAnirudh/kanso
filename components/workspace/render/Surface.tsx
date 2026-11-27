@@ -97,7 +97,7 @@ export function Surface({
                 <span className="min-w-0 max-w-[160px] truncate px-1 text-[9.5px] font-semibold uppercase tracking-[0.05em] text-[#82858f]">
                   {definition.label}
                 </span>
-                <span className="mr-1 shrink-0 text-[9px] text-[#4f525b]">
+                <span className="mr-1 shrink-0 text-[9px] text-[#8a8d98]">
                   {node.layout.span}/12
                 </span>
                 <ToolbarButton

@@ -358,6 +358,21 @@ the existing XSS boundary is the closed operation vocabulary, so the residual ri
 for this build. Revisit when a third-party script is added or a stronger CSP is required; the
 change is middleware plus Next's nonce support, not a rewrite.
 
+**ADR-13 — Accessibility is gated by axe at serious/critical, not by screenshots.**
+The canvas is hand-built (ADR-6, ADR-8), so there is no component library's baseline to inherit,
+and `scripts/shots.mjs` is a manual visual pass. `e2e/accessibility.spec.ts` runs
+`@axe-core/playwright` over the dashboard, `/sign-in` and a generated workspace with the WCAG
+2.0/2.1 A and AA rule sets, and fails on serious or critical violations; moderate and minor
+findings are left in axe's report but do not gate yet. The first runs found only real defects:
+three tiers of chrome text sat between 3.2:1 and 4.2:1, the interface palette's `--s-faint` failed
+in both themes, the priority/due pills failed on their tinted backgrounds, the done-task title
+reused `--s-faint`, and the task card's `aria-label` omitted the visible priority and due text
+(WCAG 2.5.3). The tokens and names were fixed rather than the rule disabled. The dependency is
+dev-only and confined to the test suite; axe is not shipped to the browser. The accepted
+trade-off is coverage: axe sees what is computable from the DOM on three surfaces, so keyboard
+order, focus management, zoom/reflow and screen-reader announcements still need manual checks,
+and dark-theme pages are not yet scanned because the suite does not switch themes.
+
 ## 10. Request flows (concrete)
 
 **Sign up / sign in** → the `/sign-in` form actions check both credential budgets (email and network)

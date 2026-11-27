@@ -70,19 +70,19 @@ export function TopBar({
           <Menu size={16} aria-hidden />
         </button>
         <div className="flex min-w-0 items-center gap-1.5 text-[11.5px]">
-          <span className="hidden max-w-[160px] truncate text-[#5f626b] sm:inline">{appName}</span>
+          <span className="hidden max-w-[160px] truncate text-[#7f828d] sm:inline">{appName}</span>
           <span aria-hidden className="hidden text-[#2a2e37] sm:inline">
             /
           </span>
           <span className="truncate font-medium text-[#c8cad2]">{pageTitle}</span>
         </div>
         {busy && (
-          <span className="ml-1 hidden text-[10px] text-[#6b6f7a] sm:inline" aria-live="polite">
+          <span className="ml-1 hidden text-[10px] text-[#8a8d98] sm:inline" aria-live="polite">
             Saving…
           </span>
         )}
         {!busy && (
-          <span className="ml-1 hidden items-center gap-1 text-[10px] text-emerald-400/60 sm:flex">
+          <span className="ml-1 hidden items-center gap-1 text-[10px] text-emerald-400 sm:flex">
             <Check size={9} aria-hidden />
             Saved
           </span>
@@ -111,7 +111,7 @@ export function TopBar({
                 onClick={() => setMenuOpen(false)}
               />
               <div className="rise absolute right-0 top-[38px] z-40 w-[268px] rounded-[11px] border border-[#262a32] bg-[#0d0f13] p-3 shadow-2xl">
-                <p className="text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#5f626b]">
+                <p className="text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#7f828d]">
                   Theme
                 </p>
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5">
@@ -137,7 +137,7 @@ export function TopBar({
                   ))}
                 </div>
 
-                <p className="mt-3 text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#5f626b]">
+                <p className="mt-3 text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#7f828d]">
                   Accent
                 </p>
                 <div className="mt-1.5 flex gap-1.5">
@@ -167,7 +167,7 @@ export function TopBar({
                   ))}
                 </div>
 
-                <p className="mt-3 text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#5f626b]">
+                <p className="mt-3 text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#7f828d]">
                   Density
                 </p>
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5">
@@ -193,7 +193,7 @@ export function TopBar({
                   ))}
                 </div>
 
-                <p className="mt-3 text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#5f626b]">
+                <p className="mt-3 text-[9.5px] font-semibold uppercase tracking-[0.11em] text-[#7f828d]">
                   Sidebar width
                 </p>
                 <div className="mt-1.5 grid grid-cols-2 gap-1.5">
@@ -219,7 +219,7 @@ export function TopBar({
                   ))}
                 </div>
 
-                <p className="mt-3 border-t border-[#1c1f25] pt-2 text-[10px] leading-relaxed text-[#4f525b]">
+                <p className="mt-3 border-t border-[#1c1f25] pt-2 text-[10px] leading-relaxed text-[#8a8d98]">
                   These edits are versioned like any other change and only affect your interface.
                 </p>
               </div>
