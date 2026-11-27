@@ -154,7 +154,11 @@ docker/                     entrypoint (chown the mount, drop to `kanso`) + loca
 (the `e2e` job, after `npx playwright install --with-deps chromium`) both run in CI on every pull
 request, and on every push to `main` (`.github/workflows/ci.yml`, Node 22, no `GROQ_API_KEY`).
 A push to a branch runs nothing by itself: `pull_request` is the branch gate, so the checks appear
-once the branch has a PR, and `main` gets one run after a merge. Green CI still does not
+once the branch has a PR, and `main` gets one run after a merge. The `e2e` job restores
+`~/.cache/ms-playwright` with `actions/cache` before installing, keyed on the installed
+`@playwright/test` version, so the Chromium bundle is fetched once per Playwright upgrade rather
+than once per run; `--with-deps` still apt-installs the font packages every time, which is the only
+part of the job a stalling Ubuntu mirror can still inflate. Green CI still does not
 cover the Docker, model-key and `npm audit` checks in this table. `main` is protected: both
 jobs are required status checks and admin bypass is disabled, so a red pull request cannot merge
 — and a direct push is refused until the checks have run. Every change lands as a pull request

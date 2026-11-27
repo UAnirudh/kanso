@@ -73,3 +73,4 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-26 | [CI runs once per PR push: push trigger scoped to main](2026-11-26-ci-main-only-push.md) | T-007 |
 | 2026-11-26 | [First push to main under the main-only trigger: green](2026-11-26-ci-main-push-verified.md) | T-007 |
 | 2026-11-27 | [Accessibility gate: axe on three surfaces](2026-11-27-a11y-gate.md) | T-012 |
+| 2026-11-27 | [Playwright cache restores on a pull request run](2026-11-27-playwright-cache-pr-hit.md) | T-007 |
