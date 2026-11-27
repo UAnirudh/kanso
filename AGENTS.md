@@ -158,7 +158,9 @@ next to `migrations` (a database at the previous migration, then the pending fil
 `PRAGMA foreign_key_check`), `docker` (image build + `bash docker/smoke-test.sh`) and `audit`
 (`npm audit --audit-level=high`).
 A push to a branch runs nothing by itself: `pull_request` is the branch gate, so the checks appear
-once the branch has a PR, and `main` gets one run after a merge. The `e2e` job runs in the
+once the branch has a PR, and `main` gets one run after a merge. A pull request whose branch
+conflicts with `main` gets no run at all — there is no merge ref to test — so merge `main` in rather
+than re-pushing to ask for checks. The `e2e` job runs in the
 `mcr.microsoft.com/playwright:v1.65.1-noble` container, pinned to the `@playwright/test` version in
 the lockfile. That image already contains Chromium and its shared libraries, so the job downloads no
 browser and touches no `apt` sources — the two steps a stalling Ubuntu mirror inflated on 2026-11-26

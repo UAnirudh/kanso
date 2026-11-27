@@ -55,6 +55,23 @@ no `apt` sources.
   job, 62 s of tests). The gain is that nothing in the job now depends on the runner's package
   sources, which is the failure this change exists to remove.
 
+## After the first green run
+
+- `main` moved while the PR was open (#18 and #19 landed the every-page axe gate) and that session
+  claimed T-020 in `agents/tasks.md`. This branch's row and index entry were renumbered to T-021 and
+  current `main` was merged in (`6637336`), keeping both sides of the two append-only conflicts.
+- Between the two pushes the PR read `mergeable_state: dirty`, and **a conflicting pull request gets
+  no workflow run at all**: `head_sha=76c4e29` had zero check runs and the branch listed no run,
+  because without a merge commit there is no `refs/pull/20/merge` for `pull_request` to test. The
+  fix is to merge `main`, not to re-push or re-run.
+- That merge produced run
+  [46047506548](https://github.com/UAnirudh/kanso/actions/runs/46047506548) on `6637336` — all five
+  checks green again: `playwright acceptance` 106 s, `typecheck · test · build` 35 s,
+  `schema upgrade from previous release` 15 s, `docker build · volume smoke` 90 s,
+  `npm audit (high)` 9 s. It also exercised the merged-in accessibility changes inside the
+  container, so the job is proven against the current tree and not only against this change's two
+  files.
+
 ## Not verified
 
 - No Docker daemon in this workspace, so the image was never pulled or run locally; the container
