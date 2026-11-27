@@ -295,6 +295,7 @@ body {
   --s-faint: #656e79;
   --s-accent: #6d5ce7;
   --s-accent-soft: rgba(109, 92, 231, 0.1);
+  --s-danger: #b91c1c;
   --s-shadow: 0 1px 2px rgba(16, 18, 22, 0.06), 0 8px 24px -18px rgba(16, 18, 22, 0.35);
   --s-radius: 12px;
   background: var(--s-bg);
@@ -312,6 +313,7 @@ body {
   --s-faint: #8b909a;
   --s-accent: #a292ff;
   --s-accent-soft: rgba(162, 146, 255, 0.14);
+  --s-danger: #fca5a5;
   --s-shadow: 0 1px 0 rgba(255, 255, 255, 0.03) inset,
     0 10px 30px -22px rgba(0, 0, 0, 0.9);
   color-scheme: dark;
@@ -691,8 +693,14 @@ select.s-input {
   text-align: left;
   cursor: pointer;
 }
+/* Fading the whole cell dropped every label below 4.5:1. De-emphasise the
+   surface and the day number instead, which keeps the text readable. */
 .cal-cell[data-outside="true"] {
-  opacity: 0.4;
+  background: transparent;
+  border-color: color-mix(in oklab, var(--s-border) 55%, transparent);
+}
+.cal-cell[data-outside="true"] .cal-day {
+  color: var(--s-faint);
 }
 .cal-cell[data-today="true"] {
   border-color: var(--s-accent);
@@ -713,8 +721,13 @@ select.s-input {
   padding: 1.5px 4px;
   border-radius: 3px;
   background: var(--s-accent-soft);
-  color: var(--s-accent);
+  /* 9.5px accent-on-tint is 4.2:1 in the light palette; darkening the hue keeps
+     each accent recognisable while clearing 4.5:1. Dark already passes. */
+  color: color-mix(in oklab, var(--s-accent) 70%, #000);
   font-weight: 500;
+}
+.surface[data-theme="dark"] .cal-task {
+  color: var(--s-accent);
 }
 /* Stacked chips share one cell, so each target grows away from its neighbour:
    the first upwards over the day number, the second downwards. */

@@ -2,7 +2,7 @@
 
 - Date: 2026-11-27
 - Agent: codebuff
-- Task: T-020
+- Task: T-021
 - Branch: `agent/playwright-container`
 
 ## Goal
@@ -29,7 +29,7 @@ no `apt` sources.
 - `AGENTS.md` §7 — the `e2e` description names the image instead of the install, and records the
   bump rule: move the tag in the same change as `@playwright/test`, because a mismatched image
   leaves Playwright looking for a Chromium revision it does not ship.
-- `agents/tasks.md` — T-020 row. `agents/log/README.md` — index row. This entry.
+- `agents/tasks.md` — T-021 row. `agents/log/README.md` — index row. This entry.
 
 ## Verified
 

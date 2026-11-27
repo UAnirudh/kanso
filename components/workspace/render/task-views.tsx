@@ -9,7 +9,7 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/lib/interface/types";
-import { dueMeta, formatDateLong, formatMonth, parseDate, todayIso } from "@/lib/format";
+import { dueMeta, formatMonth, parseDate, todayIso } from "@/lib/format";
 import { PRIORITY_LABEL } from "@/lib/interface/types";
 import { PRIORITY_ORDER } from "@/lib/analytics";
 import { useSurface } from "./context";
@@ -182,7 +182,7 @@ export function TaskListView({ node }: { node: InterfaceNode }) {
                     {showDueDate && due.tone !== "none" && (
                       <span
                         className={`text-[10.5px] ${
-                          due.tone === "overdue" ? "font-medium text-red-500" : "text-[var(--s-faint)]"
+                          due.tone === "overdue" ? "font-medium text-[var(--s-danger)]" : "text-[var(--s-faint)]"
                         }`}
                       >
                         {due.label}
@@ -295,7 +295,7 @@ export function TaskTableView({ node }: { node: InterfaceNode }) {
                     <td>{priorityPill(task.priority)}</td>
                     <td
                       className={`whitespace-nowrap text-[11.5px] ${
-                        due.tone === "overdue" ? "font-medium text-red-500" : "text-[var(--s-muted)]"
+                        due.tone === "overdue" ? "font-medium text-[var(--s-danger)]" : "text-[var(--s-muted)]"
                       }`}
                     >
                       {task.dueDate ? dueMeta(task.dueDate).label : "—"}
@@ -366,6 +366,9 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
   }, [api.tasks, base, month, year, showCompleted, today]);
 
   const updateOffset = (next: number) => api.updateNodeProps(node.id, { monthOffset: next });
+  // A grid needs row elements between the grid and its cells. `contents` keeps
+  // the six rows out of layout, so the 7-column CSS grid is unchanged.
+  const weeks = Array.from({ length: 6 }, (_, week) => cells.slice(week * 7, week * 7 + 7));
 
   return (
     <SurfaceCard
@@ -401,36 +404,43 @@ export function CalendarView({ node }: { node: InterfaceNode }) {
       }
     >
       <div className="cal-grid" role="grid" aria-label={`${monthLabel} calendar`}>
-        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
-          <div key={day} className="cal-dow" role="columnheader">
-            <span aria-hidden>{day.slice(0, 1)}</span>
-            <span className="sr-only">{day}</span>
-          </div>
-        ))}
-        {cells.map((cell) => (
-          <div
-            key={cell.iso + String(cell.outside)}
-            role="gridcell"
-            className="cal-cell"
-            data-outside={cell.outside}
-            data-today={cell.isToday}
-            aria-label={`${formatDateLong(cell.iso)}${cell.tasks.length ? `, ${cell.tasks.length} tasks` : ""}`}
-          >
-            <span className="cal-day">{cell.date.getDate()}</span>
-            {cell.tasks.slice(0, 2).map((task) => (
-              <button
-                key={task.id}
-                type="button"
-                className="cal-task tap-target"
-                onClick={() => api.openTask(task)}
-                title={task.title}
+        <div role="row" className="contents">
+          {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+            <div key={day} className="cal-dow" role="columnheader">
+              <span aria-hidden>{day.slice(0, 1)}</span>
+              <span className="sr-only">{day}</span>
+            </div>
+          ))}
+        </div>
+        {weeks.map((week, weekIndex) => (
+          <div key={weekIndex} role="row" className="contents">
+            {week.map((cell) => (
+              <div
+                key={cell.iso + String(cell.outside)}
+                role="gridcell"
+                className="cal-cell"
+                data-outside={cell.outside}
+                data-today={cell.isToday}
               >
-                {task.title}
-              </button>
+                <span className="cal-day">{cell.date.getDate()}</span>
+                {cell.tasks.slice(0, 2).map((task) => (
+                  <button
+                    key={task.id}
+                    type="button"
+                    className="cal-task tap-target"
+                    onClick={() => api.openTask(task)}
+                    title={task.title}
+                  >
+                    {task.title}
+                  </button>
+                ))}
+                {cell.tasks.length > 2 && (
+                  <span className="text-[9px] text-[var(--s-faint)]">
+                    +{cell.tasks.length - 2} more
+                  </span>
+                )}
+              </div>
             ))}
-            {cell.tasks.length > 2 && (
-              <span className="text-[9px] text-[var(--s-faint)]">+{cell.tasks.length - 2} more</span>
-            )}
           </div>
         ))}
       </div>

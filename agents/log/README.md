@@ -77,4 +77,5 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-27 | [Playwright cache restores on a pull request run](2026-11-27-playwright-cache-pr-hit.md) | T-007 |
 | 2026-11-27 | [Accessibility gate: both interface themes](2026-11-27-a11y-dark.md) | T-019 |
 | 2026-11-27 | [Deploy gates brought up to date and green on current main](2026-11-27-ci-deploy-gates-unstick.md) | T-015 |
-| 2026-11-27 | [E2E runs in the pinned Playwright container](2026-11-27-playwright-container-e2e.md) | T-020 |
+| 2026-11-27 | [Accessibility gate: every workspace page](2026-11-27-a11y-pages.md) | T-020 |
+| 2026-11-27 | [E2E runs in the pinned Playwright container](2026-11-27-playwright-container-e2e.md) | T-021 |
