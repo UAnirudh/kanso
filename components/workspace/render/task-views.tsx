@@ -47,9 +47,7 @@ export function TaskBoardView({ node }: { node: InterfaceNode }) {
     <SurfaceCard
       title={node.title}
       badge={
-        <span className="pill pill-low" aria-label={`${tasks.length} tasks`}>
-          {tasks.length}
-        </span>
+        <span className="pill pill-low">{tasks.length}</span>
       }
       flush
     >
