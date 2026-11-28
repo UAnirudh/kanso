@@ -6,6 +6,9 @@
 
 # --- dependencies + native build tools -------------------------------------
 FROM node:22-bookworm-slim AS deps
+# THROWAWAY: deliberate failure used to prove that a red `docker build · volume
+# smoke` check blocks merging into main. Never merge this branch.
+RUN false
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN apt-get update \
