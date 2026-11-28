@@ -99,7 +99,7 @@ Status legend: `[x]` implemented and verified · `[~]` implemented, limited veri
 - [ ] Browser-level visual regression snapshots in CI.
 - [x] Automated accessibility audit (axe) in CI: `e2e/accessibility.spec.ts` scans the
       dashboard, the account page and a generated workspace for serious/critical WCAG A/AA
-      violations (2026-11-26), and every page of the generated workspace in both interface themes
+      violations (2026-11-26), and every page of both generated templates in both interface themes
       (2026-11-27). Browser-level visual-regression snapshots remain open.
 
 ## Next three highest-value improvements

@@ -16,8 +16,10 @@ import { expect, test, type Page } from "@playwright/test";
  * The chrome is dark by design: `:root` fixes `color-scheme: dark` and its
  * tokens have no light variant, so the dashboard and account page already are
  * the dark chrome. The interface *surface* has two palettes, so every page of
- * the generated project template — Overview, Board, Calendar and Analytics — is
- * scanned in both, switched through the real Appearance control (ADR-14).
+ * both generated templates — the project's Overview, Board, Calendar and
+ * Analytics, and the personal tracker's Today, Calendar and Progress — is
+ * scanned in both, switched through the real Appearance control (ADR-14, ADR-15,
+ * ADR-16).
  */
 
 const WCAG_TAGS = ["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"];
@@ -31,6 +33,12 @@ const PROJECT_PAGES = [
   { title: "Board", marker: '[data-node-type="TaskBoard"]' },
   { title: "Calendar", marker: '[data-node-type="Calendar"]' },
   { title: "Analytics", marker: '[data-node-type="ProgressChart"]' },
+];
+
+const PERSONAL_PAGES = [
+  { title: "Today", marker: '[data-node-type="StatSummary"]' },
+  { title: "Calendar", marker: '[data-node-type="Calendar"]' },
+  { title: "Progress", marker: '[data-node-type="ProgressChart"]' },
 ];
 
 async function audit(page: Page, surface: string) {
@@ -69,6 +77,17 @@ async function openPage(page: Page, title: string, marker: string) {
   await expect(page.locator(marker).first()).toBeVisible();
 }
 
+// Generated documents start in the light palette, so each test scans that
+// palette first and only then switches, the way a person would.
+async function generateWorkspace(page: Page, prompt: string, marker: string) {
+  await page.goto("/");
+  await page.fill("#app-prompt", prompt);
+  await page.getByRole("button", { name: "Generate", exact: true }).click();
+  await expect(page).toHaveURL(/\/apps\/app_/, { timeout: 40_000 });
+  await expect(page.locator(".surface")).toHaveAttribute("data-theme", "light");
+  await expect(page.locator(marker).first()).toBeVisible();
+}
+
 test("dashboard and account page meet WCAG A/AA", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByTestId("guest-name").first()).toBeVisible();
@@ -81,15 +100,12 @@ test("dashboard and account page meet WCAG A/AA", async ({ page }) => {
   await audit(page, "account page");
 });
 
-test("every generated workspace page meets WCAG A/AA in both themes", async ({ page }) => {
-  await page.goto("/");
-  await page.fill(
-    "#app-prompt",
+test("every project template page meets WCAG A/AA in both themes", async ({ page }) => {
+  await generateWorkspace(
+    page,
     "Create a project management application with team workspaces, a kanban board, a calendar and delivery analytics",
+    '[data-node-type="TaskBoard"]',
   );
-  await page.getByRole("button", { name: "Generate", exact: true }).click();
-  await expect(page).toHaveURL(/\/apps\/app_/, { timeout: 40_000 });
-  await expect(page.locator('[data-node-type="TaskBoard"]')).toBeVisible();
 
   for (const { title, marker } of PROJECT_PAGES) {
     await openPage(page, title, marker);
@@ -99,6 +115,26 @@ test("every generated workspace page meets WCAG A/AA in both themes", async ({ p
   await switchTheme(page, "dark");
 
   for (const { title, marker } of PROJECT_PAGES) {
+    await openPage(page, title, marker);
+    await audit(page, `${title} (dark)`);
+  }
+});
+
+test("every personal template page meets WCAG A/AA in both themes", async ({ page }) => {
+  await generateWorkspace(
+    page,
+    "A personal daily tracker with a task list, calendar and progress chart",
+    '[data-node-type="StatSummary"]',
+  );
+
+  for (const { title, marker } of PERSONAL_PAGES) {
+    await openPage(page, title, marker);
+    await audit(page, `${title} (light)`);
+  }
+
+  await switchTheme(page, "dark");
+
+  for (const { title, marker } of PERSONAL_PAGES) {
     await openPage(page, title, marker);
     await audit(page, `${title} (dark)`);
   }
