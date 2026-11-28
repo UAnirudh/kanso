@@ -167,11 +167,12 @@ browser and touches no `apt` sources — the two steps a stalling Ubuntu mirror 
 and a mirror without the archive failed outright on 2026-11-27 (`fonts-freefont-ttf` unavailable,
 exit 100). Bump the tag in the same change as `@playwright/test`: a mismatched image leaves
 Playwright looking for a Chromium revision it does not ship. The only row in this table CI still
-cannot run is the model-key check. `main` is protected: `verify` and `e2e` are required status
-checks and admin bypass is disabled, so a red pull request cannot merge — and a direct push is
-refused until the checks have run. The `migrations`, `docker` and `audit` jobs report on every pull
-request but are not required yet; make them required once they have stayed green across a few
-changes. Every change lands as a pull request whose checks are green.
+cannot run is the model-key check. `main` is protected: all five CI contexts are required status
+checks, each pinned to the GitHub Actions app — `typecheck · test · build`, `playwright acceptance`,
+`schema upgrade from previous release`, `docker build · volume smoke` and `npm audit (high)` — and
+admin bypass is disabled, so a red verify, e2e, schema, Docker or audit gate cannot merge, and a
+direct push is refused until the checks have run. Every change lands as a pull request whose checks
+are green.
 
 Report what you actually ran and what you did not. "Not verified" is an acceptable result;
 "verified" for something you only compiled is not.

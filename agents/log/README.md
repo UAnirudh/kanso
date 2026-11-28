@@ -79,3 +79,4 @@ Anything that needs the human's decision. Leave it empty rather than guessing.
 | 2026-11-27 | [Deploy gates brought up to date and green on current main](2026-11-27-ci-deploy-gates-unstick.md) | T-015 |
 | 2026-11-27 | [Accessibility gate: every workspace page](2026-11-27-a11y-pages.md) | T-020 |
 | 2026-11-27 | [E2E runs in the pinned Playwright container](2026-11-27-playwright-container-e2e.md) | T-021 |
+| 2026-11-28 | [All five CI gates required on main](2026-11-28-required-deploy-checks.md) | T-022 |
